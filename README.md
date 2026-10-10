@@ -54,7 +54,7 @@ JDK 17 y Android SDK 35. Abre el proyecto en Android Studio o ejecuta:
 
 Para compilar una versión firmada, establece `PULSO_KEYSTORE_PATH` y `PULSO_KEYSTORE_PASSWORD`, y ejecuta `./gradlew :app:assembleRelease`. El alias es `pulso`; clave y almacén usan la misma contraseña. Nunca incluyas la clave privada en este repositorio.
 
-[GitHub Actions](.github/workflows/android.yml) ejecuta las comprobaciones con cada cambio en `main`. Para publicar necesita los dos secretos descritos en [ACTUALIZACIONES.md](docs/ACTUALIZACIONES.md).
+[GitHub Actions](.github/workflows/android.yml) ejecuta las comprobaciones con cada cambio en `main`. El método elegido es firmar localmente y publicar el APK y sus metadatos en Releases, sin secretos de firma en GitHub. La firma automática con dos secretos se conserva como alternativa opcional. Consulta [ACTUALIZACIONES.md](docs/ACTUALIZACIONES.md).
 
 ## Licencia
 

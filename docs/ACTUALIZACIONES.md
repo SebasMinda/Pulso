@@ -2,22 +2,31 @@
 
 La app consulta únicamente la última versión publicada en **SebasMinda/Pulso**. Las versiones de prueba y los borradores no se ofrecen al teléfono. GitHub mantiene el código y compila el APK; la actualización no cambia tu música dentro de la app con firma estable.
 
-## Configuración inicial de la firma
+## Método elegido: firmar las versiones localmente
 
-Se entrega por separado `Pulso-firma-privada.zip`. Guárdalo en un lugar privado y duradero. Contiene una clave cifrada `pulso.jks`, su contraseña y los dos valores preparados para GitHub. **Nunca lo subas al repositorio público ni lo adjuntes a una Release.**
+Las nuevas versiones de Pulso se compilan y firman localmente con la misma clave estable que Pulso 0.2.0. GitHub conserva el código y ejecuta las pruebas; no necesita guardar secretos de firma para este método. La clave privada se mantiene fuera del repositorio.
 
-En el repositorio, abre **Settings → Secrets and variables → Actions → New repository secret** y crea:
+1. Mantener `applicationId` y la clave estable, y aumentar `versionCode` y `versionName`.
+2. Ejecutar las pruebas y Lint.
+3. Compilar con `PULSO_KEYSTORE_PATH` y `PULSO_KEYSTORE_PASSWORD` definidos en el entorno privado: `./gradlew :app:assembleRelease`.
+4. Verificar el APK con `apksigner verify --print-certs` y comprobar que coincide con `SIGNING_CERTIFICATE.txt`.
+5. Nombrar el APK firmado `Pulso.apk` y generar los metadatos: `python3 tools/make_update.py Pulso.apk update.json`.
+6. Crear una Release en **SebasMinda/Pulso** con la etiqueta de la versión y adjuntar `Pulso.apk`, `update.json` y el código fuente correspondiente. Publicar cuando estén todos los archivos.
+
+El APK firmado de 0.3.0 ya se generó localmente. Publicar el código en `main` por sí solo no publica la actualización: también deben existir los archivos en una Release. Android pide confirmar la instalación.
+
+Guarda `Pulso-firma-privada.zip` en un lugar privado y duradero. Nunca lo subas al repositorio ni a una Release.
+
+## Alternativa opcional: firma automática en GitHub
+
+Solo si después se decide compilar y firmar en GitHub, configurar una vez estos secretos en **Settings → Secrets and variables → Actions**:
 
 | Nombre | Valor |
 | --- | --- |
-| `PULSO_KEYSTORE_BASE64` | Contenido completo de `keystore-base64.txt` del paquete privado. |
-| `PULSO_KEYSTORE_PASSWORD` | Contenido de `signing-password.txt` del paquete privado. |
+| `PULSO_KEYSTORE_BASE64` | Contenido de `keystore-base64.txt` del respaldo privado. |
+| `PULSO_KEYSTORE_PASSWORD` | Contenido de `signing-password.txt` del respaldo privado. |
 
-La clave usa el alias `pulso`. No cambies ni reemplaces estos valores para cada versión. Sin ellos, las pruebas se ejecutan pero la publicación firmada se detiene con un mensaje claro.
-
-## Alternativa sin secretos de GitHub
-
-Los dos secretos se configuran una sola vez para que GitHub compile y firme automáticamente. También se puede compilar y firmar localmente con la misma clave y subir manualmente `Pulso.apk` y `update.json` a una Release. La firma fija sigue siendo necesaria en ambas opciones. No hace falta cambiar la clave en cada versión.
+La clave usa el alias `pulso`. No cambiar estos valores por versión. Los pasos siguientes de Actions son para esta alternativa; no hacen falta para la firma local elegida.
 
 ## Primera publicación
 
