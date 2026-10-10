@@ -9,6 +9,8 @@ Reproductor de música personal en español, con biblioteca local, audio de vide
 - Importación de varios archivos desde el selector de Android.
 - Consulta de formatos pegando un enlace o compartiéndolo desde YouTube.
 - Descarga del flujo original sin convertir ni volver a comprimir.
+- Descarga por partes con hasta tres conexiones, reintentos y alternativa de una conexión.
+- Progreso con cantidad descargada y velocidad promedio.
 - Exportación de descargas a una carpeta elegida por el usuario.
 - Aviso de actualizaciones y descarga del APK firmado desde **SebasMinda/Pulso**.
 

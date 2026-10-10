@@ -15,6 +15,10 @@ En el repositorio, abre **Settings → Secrets and variables → Actions → New
 
 La clave usa el alias `pulso`. No cambies ni reemplaces estos valores para cada versión. Sin ellos, las pruebas se ejecutan pero la publicación firmada se detiene con un mensaje claro.
 
+## Alternativa sin secretos de GitHub
+
+Los dos secretos se configuran una sola vez para que GitHub compile y firme automáticamente. También se puede compilar y firmar localmente con la misma clave y subir manualmente `Pulso.apk` y `update.json` a una Release. La firma fija sigue siendo necesaria en ambas opciones. No hace falta cambiar la clave en cada versión.
+
 ## Primera publicación
 
 1. Abre **Actions → Android → Run workflow**.

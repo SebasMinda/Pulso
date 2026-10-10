@@ -25,7 +25,7 @@ public class MainActivity extends Activity {
  private PlayerService player; private boolean bound, seeking; private final ArrayList<Track> tracks=new ArrayList<>();
  private Updater updater;
  private final Handler handler=new Handler(Looper.getMainLooper()); private final ExecutorService jobs=Executors.newSingleThreadExecutor();
- private List<AudioStream> streams; private String videoTitle; private File exportFile; private volatile okhttp3.Call activeCall; private volatile boolean cancelled,busy;
+ private List<AudioStream> streams; private String videoTitle; private File exportFile; private volatile AudioDownload audioDownload; private volatile boolean cancelled,busy;
  private final ServiceConnection connection=new ServiceConnection(){
   @Override public void onServiceConnected(ComponentName n,IBinder b){player=((PlayerService.LocalBinder)b).get();bound=true;player.setQueue(tracks);}
   @Override public void onServiceDisconnected(ComponentName n){player=null;bound=false;}
@@ -56,7 +56,7 @@ public class MainActivity extends Activity {
   LinearLayout yt=section();yt.addView(text("Desde YouTube",22,Color.WHITE));yt.addView(text("Pega un enlace de video y elige el audio original disponible.",14,MUTED));
   link=new EditText(this);link.setTextColor(Color.WHITE);link.setHintTextColor(MUTED);link.setTextSize(14);link.setHint("https://youtu.be/…");link.setSingleLine(true);link.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_URI);yt.addView(link);
   download=button("Buscar audio",this::extract);yt.addView(download);status=text("Sin conversiones: conserva el audio de origen.",13,MUTED);yt.addView(status);
-  Button cancel=button("Cancelar descarga",()->{cancelled=true;okhttp3.Call c=activeCall;if(c!=null)c.cancel();});yt.addView(cancel);
+  Button cancel=button("Cancelar descarga",()->{cancelled=true;AudioDownload d=audioDownload;if(d!=null)d.cancel();});yt.addView(cancel);
   yt.addView(text("Descarga contenido propio o con permiso. Los videos privados y protegidos no están disponibles.",12,MUTED));
   LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);root.addView(row);TextView heading=text("Tu biblioteca",23,Color.WHITE);row.addView(heading,new LinearLayout.LayoutParams(0,-2,1));row.addView(button("+ Importar",this::pick));
   root.addView(text("MP3 · M4A · FLAC · WAV · WebM/Opus",12,MUTED));songs=new LinearLayout(this);songs.setOrientation(LinearLayout.VERTICAL);root.addView(songs);renderSongs();
@@ -93,16 +93,21 @@ public class MainActivity extends Activity {
  }
  private void fetch(AudioStream stream,String title){if(busy)return;cancelled=false;busy(true,"Descargando… Mantén la app abierta hasta terminar.");getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
   jobs.execute(()->{File partial=null;try{File dir=new File(getFilesDir(),"music");if(!dir.exists()&&!dir.mkdirs())throw new IOException("Sin espacio");String base=title.replaceAll("[^\\p{L}\\p{N} ._-]","_");if(base.length()>90)base=base.substring(0,90);File dest=new File(dir,base+"-"+System.currentTimeMillis()+"."+stream.getFormat().getSuffix());partial=new File(dest+".part");
-    okhttp3.Request req=new okhttp3.Request.Builder().url(stream.getContent()).header("User-Agent","Mozilla/5.0").build();activeCall=Net.CLIENT.newCall(req);
-    try(okhttp3.Response r=activeCall.execute()){if(!r.isSuccessful()||r.body()==null)throw new IOException("HTTP "+r.code());long total=r.body().contentLength();try(BufferedInputStream in=new BufferedInputStream(r.body().byteStream());OutputStream out=new FileOutputStream(partial)){in.mark(16);byte[] head=new byte[12];int read=0;while(read<head.length){int got=in.read(head,read,head.length-read);if(got<0)break;read+=got;}if(read<head.length)throw new IOException("Archivo incompleto");in.reset();boolean webm=head.length>=4&&(head[0]&255)==0x1a&&(head[1]&255)==0x45&&(head[2]&255)==0xdf&&(head[3]&255)==0xa3;boolean mp4=head.length>=8&&head[4]=='f'&&head[5]=='t'&&head[6]=='y'&&head[7]=='p';if(!webm&&!mp4)throw new IOException("La red devolvió una respuesta que no es audio");byte[] b=new byte[65536];int n;long done=0,last=0;while((n=in.read(b))!=-1){if(cancelled)throw new IOException("Cancelado");out.write(b,0,n);done+=n;long clock=System.currentTimeMillis();if(clock-last>500){last=clock;String msg=total>0?"Descargando: "+(done*100/total)+" %":"Descargando: "+(done/1048576)+" MB";ui(()->status.setText(msg));}}if(done==0||(total>0&&done!=total))throw new IOException("Descarga incompleta");}}
+    AudioDownload task=new AudioDownload(Net.CLIENT);audioDownload=task;if(cancelled)task.cancel();
+    final long started=System.nanoTime();
+    task.download(stream.getContent(),partial,(done,total)->{
+     double seconds=Math.max(0.1,(System.nanoTime()-started)/1e9);
+     String msg=String.format(Locale.ROOT,"Descargando: %s · %.1f MB · %.0f KB/s",total>0?(done*100/total)+" %":"…",done/1048576.0,done/1024.0/seconds);
+     ui(()->status.setText(msg));
+    });
     if(cancelled)throw new IOException("Cancelado");if(!partial.renameTo(dest))throw new IOException("No se pudo guardar");ui(()->{tracks.add(new Track(title,dest.toURI().toString()));save();renderSongs();if(player!=null)player.setQueue(tracks);busy(false,"Guardado. Ya puedes escucharlo sin internet.");});
    }catch(Exception e){if(partial!=null)partial.delete();ui(()->busy(false,cancelled?"Descarga cancelada.":"No se pudo descargar. Prueba consultar el enlace otra vez. "+e.getMessage()));}
-   finally{activeCall=null;ui(()->getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));}});
+   finally{audioDownload=null;ui(()->getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));}});
  }
  private static void copy(InputStream in,OutputStream out)throws IOException{byte[] b=new byte[65536];int n;while((n=in.read(b))!=-1)out.write(b,0,n);}
  private void acceptShare(Intent i){if(Intent.ACTION_SEND.equals(i.getAction())){String s=i.getStringExtra(Intent.EXTRA_TEXT);if(s!=null)link.setText(s);}}
  @Override protected void onNewIntent(Intent i){super.onNewIntent(i);acceptShare(i);}
  private String clock(int ms){return String.format(Locale.ROOT,"%d:%02d",ms/60000,ms/1000%60);}
  private final Runnable tick=new Runnable(){public void run(){if(player!=null){now.setText(player.title());play.setText(player.playing()?"Pausar":"Reproducir");if(!seeking){seek.setMax(Math.max(player.duration(),1));seek.setProgress(player.position());}time.setText(clock(player.position())+" / "+clock(player.duration()));if(!player.error.isEmpty()){toast(player.error);player.error="";}}handler.postDelayed(this,500);}};
- @Override public void onDestroy(){if(updater!=null)updater.close();handler.removeCallbacksAndMessages(null);cancelled=true;okhttp3.Call c=activeCall;if(c!=null)c.cancel();jobs.shutdownNow();if(bound)unbindService(connection);super.onDestroy();}
+ @Override public void onDestroy(){if(updater!=null)updater.close();handler.removeCallbacksAndMessages(null);cancelled=true;AudioDownload d=audioDownload;if(d!=null)d.cancel();jobs.shutdownNow();if(bound)unbindService(connection);super.onDestroy();}
 }
