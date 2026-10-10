@@ -1,0 +1,2 @@
+Public signing-certificate fingerprint for the stable Pulso app.
+SHA256: DA:87:DD:90:4B:6E:53:E4:82:53:4D:34:CD:FB:45:9E:B9:7A:6D:B1:69:7E:B2:02:2B:FD:2F:1C:FA:BA:A9:DE

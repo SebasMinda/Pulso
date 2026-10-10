@@ -1,0 +1,27 @@
+plugins { id 'com.android.application' }
+def appVersion = new Properties()
+rootProject.file('version.properties').withInputStream { appVersion.load(it) }
+def keystorePath = System.getenv('PULSO_KEYSTORE_PATH')
+def keystorePassword = System.getenv('PULSO_KEYSTORE_PASSWORD')
+android {
+    namespace 'com.sebas.pulso'
+    compileSdk 35
+    defaultConfig { applicationId 'com.sebas.pulso.app'; minSdk 26; targetSdk 35; versionCode appVersion.versionCode.toInteger(); versionName appVersion.versionName }
+    buildFeatures { buildConfig true }
+    signingConfigs {
+        if (keystorePath && keystorePassword) {
+            stable { storeFile file(keystorePath); storePassword keystorePassword; keyAlias 'pulso'; keyPassword keystorePassword }
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17; coreLibraryDesugaringEnabled true }
+    buildTypes { release { minifyEnabled false; if (keystorePath && keystorePassword) signingConfig signingConfigs.stable } }
+    packaging { resources { excludes += ['META-INF/DEPENDENCIES','META-INF/LICENSE*','META-INF/NOTICE*'] } }
+}
+dependencies {
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'com.github.TeamNewPipe:NewPipeExtractor:65cabc2ba5216ee871ace4a9963c08bdbf5d5dc0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}
