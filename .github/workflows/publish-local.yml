@@ -1,0 +1,52 @@
+name: Publicar APK firmado localmente
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.release/Pulso.apk'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pulso-local-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Comprobar el código de la versión
+        run: bash gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug
+      - name: Verificar APK firmado y preparar publicación
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          cp .release/Pulso.apk release/Pulso.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs release/Pulso.apk > release/certificate.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging release/Pulso.apk > release/package.txt
+          python3 tools/verify_local_release.py release/Pulso.apk release/certificate.txt release/package.txt
+          python3 tools/make_update.py release/Pulso.apk release/update.json
+          git archive --format=zip --output=release/Pulso-source.zip HEAD
+      - name: Publicar archivos para la actualización desde Pulso
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          VERSION=$(python3 -c 'import json; print(json.load(open("release/update.json"))["versionName"])')
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo 'Esta versión ya existe. No se reemplazarán sus archivos.'
+            exit 1
+          fi
+          gh release create "$TAG" release/Pulso.apk release/update.json release/Pulso-source.zip --target "$GITHUB_SHA" --title "Pulso $VERSION" --notes-file CHANGELOG.md --draft
+          gh release edit "$TAG" --draft=false --latest
