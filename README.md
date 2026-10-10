@@ -5,6 +5,9 @@ Reproductor de música personal en español, con biblioteca local, audio de vide
 ## Funciones
 
 - Reproducción de MP3, M4A, FLAC, WAV y WebM/Opus.
+- Pestañas Biblioteca, Reproductor, Descargas y Ajustes, con minirreproductor.
+- Portadas de los nuevos videos descargados, portadas incrustadas de archivos importados y elección manual de una imagen.
+- Portadas guardadas en el teléfono para escucharlas sin internet.
 - Reproducción en segundo plano y controles en la notificación.
 - Importación de varios archivos desde el selector de Android.
 - Consulta de formatos pegando un enlace o compartiéndolo desde YouTube.
@@ -23,11 +26,11 @@ Pulso 0.1 usaba una firma de prueba cuya clave no se conservó. La distribución
 ## Usar
 
 1. Pulsa **+ Importar** y selecciona tus canciones.
-2. Toca una canción para reproducirla. Concede el permiso de notificaciones si quieres los controles fuera de la app.
-3. Para YouTube, pega el enlace de un video o usa **Compartir → Pulso** y pulsa **Buscar audio**.
+2. En Biblioteca, toca una canción para abrir Reproductor y escucharla. Concede el permiso de notificaciones si quieres los controles fuera de la app.
+3. En Descargas, pega el enlace de un video o usa **Compartir → Pulso** y pulsa **Buscar audio**.
 4. Elige un formato y mantén Pulso abierta hasta que termine la descarga.
 5. Con **⋮ → Guardar una copia…** puedes copiar una descarga a una carpeta del teléfono.
-6. En **Actualizaciones**, pulsa **Buscar actualizaciones**. Si hay una versión nueva, acepta su descarga y confirma la instalación. **Avisar al abrir Pulso** consulta como máximo una vez al día mientras abres la app.
+6. En **Ajustes → Actualizaciones**, pulsa **Buscar actualizaciones**. Si hay una versión nueva, acepta su descarga y confirma la instalación. **Avisar al abrir Pulso** consulta como máximo una vez al día mientras abres la app.
 
 ## Calidad y límites
 
@@ -36,7 +39,9 @@ Se conserva el formato original disponible: M4A suele contener AAC y WebM puede 
 Convertir audio comprimido a FLAC no recupera información perdida. Puedes importar FLAC que ya tengas, pero no se ofrece conversión de YouTube a FLAC.
 
 - Las descargas requieren mantener la app abierta y se cancelan al cerrar la actividad.
-- No hay búsqueda por nombre, carátulas, ecualizador ni descarga de playlists.
+- No hay búsqueda por nombre, ecualizador ni descarga de playlists.
+- Las descargas antiguas sin imagen guardada pueden usar **⋮ → Elegir portada…**. No se consulta automáticamente una portada de álbum por nombre.
+- La imagen de YouTube es la miniatura del video y puede no ser una portada oficial del álbum.
 - YouTube puede cambiar su sistema o restringir videos. Se rechazan respuestas que no sean audio; no se eluden inicios de sesión ni protección de contenido.
 - Quitar una canción de la biblioteca no borra su archivo. Desinstalar borra las descargas privadas: exporta lo que quieras conservar antes de hacerlo.
 - Las actualizaciones requieren confirmación. Se comprueban tamaño, SHA-256, identidad, versión y firma del APK.

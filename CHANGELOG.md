@@ -1,3 +1,13 @@
+Pulso 0.4.0
+
+- Pestañas Biblioteca, Reproductor, Descargas y Ajustes.
+- Portadas en biblioteca, reproductor y minirreproductor.
+- Imagen del video para nuevas descargas y portada incrustada de archivos importados.
+- Elegir una imagen desde el menú de cada canción, también para descargas antiguas.
+- Portadas guardadas localmente para escuchar sin internet.
+- Minirreproductor entre pestañas y portada en los controles multimedia.
+- Conserva biblioteca, descarga por partes, firma estable y reproducción de FLAC sin conversión.
+
 Pulso 0.3.0
 
 - Descarga del audio original por partes con hasta tres conexiones.

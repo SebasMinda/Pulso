@@ -5,6 +5,7 @@ import android.content.*;
 import android.media.*;
 import android.media.session.*;
 import android.net.Uri;
+import android.graphics.Bitmap;
 import android.os.*;
 import java.util.*;
 
@@ -12,6 +13,7 @@ public class PlayerService extends Service {
  public static PlayerService instance;
  public final ArrayList<Track> queue = new ArrayList<>();
  private MediaPlayer player; private MediaSession session; private AudioManager audio; private AudioFocusRequest focus;
+ private String artworkKey="";private Bitmap artwork;
  private int index=-1; private boolean preparing=false; public String error="";
  public class LocalBinder extends Binder { public PlayerService get() { return PlayerService.this; } }
  @Override public void onCreate() {
@@ -38,6 +40,8 @@ public class PlayerService extends Service {
   return START_NOT_STICKY;
  }
  public void setQueue(List<Track> tracks){String current=index>=0&&index<queue.size()?queue.get(index).uri:null;queue.clear();queue.addAll(tracks);if(current!=null){index=-1;for(int n=0;n<queue.size();n++)if(queue.get(n).uri.equals(current)){index=n;break;}}}
+ public Track currentTrack(){return index>=0&&index<queue.size()?queue.get(index):null;}
+ public void refreshArtwork(){artworkKey="";update();}
  public String title(){return index>=0&&index<queue.size()?queue.get(index).title:"Elige una canción";}
  public boolean playing(){return player!=null&&!preparing&&player.isPlaying();}
  public int duration(){return player!=null&&!preparing?player.getDuration():0;}
@@ -63,9 +67,12 @@ public class PlayerService extends Service {
  private PendingIntent action(String a){return PendingIntent.getService(this,a.hashCode(),new Intent(this,PlayerService.class).setAction(a),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);}
  private void update(){
   if(player==null)return;
-  session.setMetadata(new MediaMetadata.Builder().putString(MediaMetadata.METADATA_KEY_TITLE,title()).putLong(MediaMetadata.METADATA_KEY_DURATION,duration()).build());
+  Track track=currentTrack();String key=track==null?"empty":track.uri+"\n"+track.cover;
+  if(!key.equals(artworkKey)){artworkKey=key;artwork=CoverArt.cached(this,track);}
+  session.setMetadata(new MediaMetadata.Builder().putString(MediaMetadata.METADATA_KEY_TITLE,title()).putString(MediaMetadata.METADATA_KEY_ARTIST,track==null?"":track.artist).putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART,artwork).putLong(MediaMetadata.METADATA_KEY_DURATION,duration()).build());
   session.setPlaybackState(new PlaybackState.Builder().setActions(PlaybackState.ACTION_PLAY|PlaybackState.ACTION_PAUSE|PlaybackState.ACTION_SKIP_TO_NEXT|PlaybackState.ACTION_SKIP_TO_PREVIOUS|PlaybackState.ACTION_SEEK_TO).setState(playing()?PlaybackState.STATE_PLAYING:PlaybackState.STATE_PAUSED,position(),1).build());
   Notification n=new Notification.Builder(this,"player").setSmallIcon(com.sebas.pulso.R.drawable.icon).setContentTitle(title()).setContentText("Pulso · Tu música")
+   .setLargeIcon(artwork)
    .setContentIntent(PendingIntent.getActivity(this,0,new Intent(this,MainActivity.class),PendingIntent.FLAG_IMMUTABLE))
    .addAction(new Notification.Action.Builder(android.R.drawable.ic_media_previous,"Anterior",action("prev")).build())
    .addAction(new Notification.Action.Builder(playing()?android.R.drawable.ic_media_pause:android.R.drawable.ic_media_play,playing()?"Pausar":"Reproducir",action("toggle")).build())
