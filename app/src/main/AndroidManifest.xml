@@ -4,7 +4,7 @@
  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
- <application android:label="Pulso" android:theme="@android:style/Theme.Material.NoActionBar" android:icon="@drawable/icon" android:allowBackup="false" android:supportsRtl="true" android:usesCleartextTraffic="false">
+ <application android:label="Pulso" android:theme="@style/PulsoTheme" android:icon="@drawable/icon" android:allowBackup="false" android:supportsRtl="true" android:usesCleartextTraffic="false">
   <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize">
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
    <intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="text/plain"/></intent-filter>

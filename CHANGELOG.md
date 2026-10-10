@@ -1,3 +1,10 @@
+Pulso 0.5.0
+
+- Nueva paleta negra, roja y dorada en las cuatro pestañas.
+- Botones rojos, detalles dorados y fondos negros.
+- Icono y portada predeterminada con la nueva paleta.
+- Conserva biblioteca, portadas, descarga rápida y reproducción FLAC.
+
 Pulso 0.4.0
 
 - Pestañas Biblioteca, Reproductor, Descargas y Ajustes.

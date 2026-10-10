@@ -29,11 +29,22 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Pruebas, revisión y APK de desarrollo
-        run: bash gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+        run: bash gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease
       - uses: actions/upload-artifact@v4
         with:
           name: Pulso-desarrollo-no-instalar-como-actualizacion
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Preparar APK sin firma para firmarlo localmente
+        run: |
+          mkdir -p local-signing
+          cp app/build/outputs/apk/release/app-release-unsigned.apk local-signing/
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" local-signing/
+          cp "$ANDROID_HOME/build-tools/35.0.0/aapt" local-signing/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pulso-para-firma-local
+          path: local-signing/
 
   release:
     needs: checks
