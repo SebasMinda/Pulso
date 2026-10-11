@@ -9,7 +9,8 @@ Reproductor de música personal en español, con biblioteca local, audio de vide
 - Agregar enlaces individuales o pegar varios enlaces, uno por línea.
 
 - Reproducción de MP3, M4A, FLAC, WAV y WebM/Opus.
-- Pestañas Biblioteca, Reproductor, Descargas y Ajustes, con minirreproductor.
+- Pestañas Biblioteca, Descargas y Ajustes. Reproductor expandible desde la barra inferior mediante gesto o toque.
+- Modo aleatorio guardado, sin repetir canciones dentro de cada vuelta y con historial para Anterior.
 - Portadas de los nuevos videos descargados, portadas incrustadas de archivos importados y elección manual de una imagen.
 - Portadas guardadas en el teléfono para escucharlas sin internet.
 - Reproducción en segundo plano y controles en la notificación.
@@ -30,7 +31,7 @@ Pulso 0.1 usaba una firma de prueba cuya clave no se conservó. La distribución
 ## Usar
 
 1. Pulsa **+ Importar** y selecciona tus canciones.
-2. En Biblioteca, toca una canción para abrir Reproductor y escucharla. Concede el permiso de notificaciones si quieres los controles fuera de la app.
+2. En Biblioteca, toca una canción para escucharla. Desliza la barrita inferior hacia arriba para abrir el reproductor y hacia abajo para reducirlo. Puedes activar Aleatorio dentro del reproductor. Concede el permiso de notificaciones si quieres los controles fuera de la app.
 3. En Descargas, busca una canción o artista y pulsa **Agregar y elegir calidad** en el video elegido. También puedes pegar un enlace, compartir desde YouTube o usar **Pegar varios enlaces**.
 4. Revisa tu lista y cambia **Calidad** en cada canción si quieres. Pulsa **Descargar todo** y mantén Pulso abierta. **Detener descargas** conserva lo terminado y permite reiniciar lo pendiente. Las fallidas quedan en la lista para reintentar. Las descargadas se quitan automáticamente de la lista y aparecen en la biblioteca.
 5. Con **⋮ → Guardar una copia…** puedes copiar una descarga a una carpeta del teléfono.

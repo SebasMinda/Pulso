@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
  private final TextView[] tabs=new TextView[4];
  private int selectedTab;
  private ImageView playerCover,miniCover;private TextView artist,miniTitle,libraryCount;private Button miniPlay;
+ private Button shuffleButton;private boolean playerExpanded,gestureEligible,gestureConsumed;private float gestureX,gestureY;
  private LinearLayout miniPlayer;private Track coverTarget;private String shownCover="";
 
  private final Handler handler=new Handler(Looper.getMainLooper()); private final ExecutorService jobs=Executors.newSingleThreadExecutor();
@@ -68,11 +69,30 @@ public class MainActivity extends Activity {
  private LinearLayout section(){LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(18),dp(14),dp(18),dp(14));rounded(box,CARD);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(12),0,dp(8));root.addView(box,lp);return box;}
  private ImageView cover(int size){ImageView image=new ImageView(this);image.setScaleType(ImageView.ScaleType.CENTER_CROP);image.setImageResource(R.drawable.cover_placeholder);rounded(image,CARD);image.setClipToOutline(true);image.setContentDescription("Portada de la canción");image.setLayoutParams(new LinearLayout.LayoutParams(dp(size),dp(size)));return image;}
  private void page(int index,FrameLayout container){
-  ScrollView sc=new ScrollView(this);sc.setFillViewport(true);sc.setClipToPadding(false);
+  ScrollView sc=new ScrollView(this);sc.setFillViewport(true);sc.setClipToPadding(false);sc.setBackgroundColor(BG);
   root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(dp(20),dp(12),dp(20),dp(24));sc.addView(root);container.addView(sc,new FrameLayout.LayoutParams(-1,-1));pages[index]=sc;
  }
  private void heading(String title,String subtitle){TextView h=text(title,30,Color.WHITE);h.setTypeface(null,Typeface.BOLD);root.addView(h);root.addView(text(subtitle,14,MUTED));}
- private void selectTab(int index){selectedTab=index;for(int i=0;i<4;i++){pages[i].setVisibility(i==index?View.VISIBLE:View.GONE);tabs[i].setTextColor(i==index?GOLD:MUTED);tabs[i].setTypeface(null,i==index?Typeface.BOLD:Typeface.NORMAL);if(i==index)tabs[i].setBackground(metallicRed(true));else rounded(tabs[i],BG);tabs[i].setSelected(i==index);}miniPlayer.setVisibility(index==1?View.GONE:View.VISIBLE);}
+ private void selectTab(int index){
+  if(index==1){setPlayerExpanded(true,true);return;}if(index!=0&&index!=2&&index!=3)index=0;
+  if(playerExpanded)setPlayerExpanded(false,false);selectedTab=index;
+  for(int i=0;i<4;i++){if(i!=1)pages[i].setVisibility(i==index?View.VISIBLE:View.GONE);if(tabs[i]!=null){tabs[i].setTextColor(i==index?GOLD:MUTED);tabs[i].setTypeface(null,i==index?Typeface.BOLD:Typeface.NORMAL);if(i==index)tabs[i].setBackground(metallicRed(true));else rounded(tabs[i],BG);tabs[i].setSelected(i==index);}}
+  pages[1].setVisibility(View.GONE);miniPlayer.setVisibility(View.VISIBLE);
+ }
+ private void setPlayerExpanded(boolean expanded,boolean animate){
+  if(pages[1]==null||miniPlayer==null)return;playerExpanded=expanded;pages[1].animate().cancel();
+  if(expanded){hideKeyboard();pages[1].setVisibility(View.VISIBLE);pages[1].bringToFront();miniPlayer.setVisibility(View.GONE);if(animate){pages[1].setTranslationY(Math.max(dp(160),pages[1].getHeight()));pages[1].animate().translationY(0).setDuration(220).setInterpolator(new android.view.animation.DecelerateInterpolator()).start();}else pages[1].setTranslationY(0);}
+  else{miniPlayer.setVisibility(View.VISIBLE);if(animate){pages[1].animate().translationY(Math.max(dp(160),pages[1].getHeight())).setDuration(200).withEndAction(()->{if(!playerExpanded){pages[1].setVisibility(View.GONE);pages[1].setTranslationY(0);}}).start();}else{pages[1].setVisibility(View.GONE);pages[1].setTranslationY(0);}}
+ }
+ private boolean inside(View v,float x,float y){android.graphics.Rect r=new android.graphics.Rect();return v!=null&&v.getGlobalVisibleRect(r)&&r.contains((int)x,(int)y);}
+ @Override public boolean dispatchTouchEvent(MotionEvent e){
+  int action=e.getActionMasked();
+  if(action==MotionEvent.ACTION_DOWN){gestureX=e.getRawX();gestureY=e.getRawY();gestureConsumed=false;gestureEligible=playerExpanded?inside(pages[1],gestureX,gestureY)&&pages[1].getScrollY()==0&&!inside(seek,gestureX,gestureY):inside(miniPlayer,gestureX,gestureY);}
+  if(action==MotionEvent.ACTION_MOVE&&gestureEligible&&!gestureConsumed){float dx=e.getRawX()-gestureX,dy=e.getRawY()-gestureY;if(Math.abs(dy)>dp(48)&&Math.abs(dy)>Math.abs(dx)*1.5f&&(playerExpanded?dy>0:dy<0)){MotionEvent cancel=MotionEvent.obtain(e);cancel.setAction(MotionEvent.ACTION_CANCEL);super.dispatchTouchEvent(cancel);cancel.recycle();gestureConsumed=true;setPlayerExpanded(!playerExpanded,true);}}
+  if(gestureConsumed){if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL)gestureEligible=false;return true;}
+  return super.dispatchTouchEvent(e);
+ }
+ @Override public void onBackPressed(){if(playerExpanded)setPlayerExpanded(false,true);else super.onBackPressed();}
  private void togglePlayback(){if(player!=null){startService(new Intent(this,PlayerService.class));player.toggle();}}
  private void build(){
   LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);shell.setBackgroundColor(BG);shell.setFocusableInTouchMode(true);setContentView(shell);
@@ -85,7 +105,7 @@ public class MainActivity extends Activity {
   LinearLayout libraryRow=new LinearLayout(this);libraryRow.setGravity(Gravity.CENTER_VERTICAL);root.addView(libraryRow);libraryCount=text("0 canciones",13,MUTED);libraryRow.addView(libraryCount,new LinearLayout.LayoutParams(0,-2,1));libraryRow.addView(button("+ Importar",this::pick));
   songs=new LinearLayout(this);songs.setOrientation(LinearLayout.VERTICAL);root.addView(songs);root.addView(text("MP3 · M4A · FLAC · WAV · WebM/Opus",11,MUTED));renderSongs();
 
-  page(1,container);heading("Ahora suena","Dale un momento a tu música.");
+  page(1,container);TextView handle=text("━",28,GOLD);handle.setGravity(Gravity.CENTER);handle.setContentDescription("Reducir reproductor");handle.setOnClickListener(v->setPlayerExpanded(false,true));root.addView(handle);heading("Ahora suena","Desliza hacia abajo para reducir.");
   LinearLayout box=section();
   int artSize=Math.min(300,Math.max(140,(int)(getResources().getDisplayMetrics().widthPixels/getResources().getDisplayMetrics().density)-80));
   playerCover=cover(artSize);LinearLayout.LayoutParams artLp=new LinearLayout.LayoutParams(dp(artSize),dp(artSize));artLp.gravity=Gravity.CENTER_HORIZONTAL;artLp.setMargins(0,dp(8),0,dp(20));box.addView(playerCover,artLp);
@@ -95,6 +115,7 @@ public class MainActivity extends Activity {
   LinearLayout controls=new LinearLayout(this);controls.setGravity(Gravity.CENTER);box.addView(controls);
   Button prev=button("◀",()->{if(player!=null)player.previous();});play=button("Reproducir",this::togglePlayback);Button next=button("▶",()->{if(player!=null)player.next();});prev.setContentDescription("Canción anterior");next.setContentDescription("Canción siguiente");
   for(Button b:new Button[]{prev,play,next}){LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(56),b==play?2:1);lp.setMargins(dp(3),dp(8),dp(3),dp(8));controls.addView(b,lp);}
+  shuffleButton=button("Aleatorio: desactivado",()->{if(player!=null){player.setShuffle(!player.shuffleEnabled());refreshShuffle();}});box.addView(shuffleButton);
   box.addView(text("La música sigue mientras navegas por las pestañas.",12,MUTED));
 
   page(2,container);buildDownloads();
@@ -105,18 +126,18 @@ public class MainActivity extends Activity {
   Switch automatic=new Switch(this);automatic.setText("Avisar al abrir Pulso");automatic.setTextColor(MUTED);automatic.setThumbTintList(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_checked},new int[]{}},new int[]{GOLD,MUTED}));automatic.setTrackTintList(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_checked},new int[]{}},new int[]{RED,CARD}));automatic.setChecked(updater.automatic());automatic.setOnCheckedChangeListener((v,value)->updater.automatic(value));updates.addView(automatic);updater.checkOnLaunch();
   LinearLayout about=section();about.addView(text("Tu música es tuya",21,Color.WHITE));about.addView(text("Importa tus archivos FLAC y otros formatos. Si una canción no tiene portada, puedes elegir una desde su menú ⋮.",14,MUTED));about.addView(text("Pulso "+BuildConfig.VERSION_NAME+" · Hecha para escuchar",12,GOLD));
 
-  miniPlayer=new LinearLayout(this);miniPlayer.setGravity(Gravity.CENTER_VERTICAL);miniPlayer.setPadding(dp(12),dp(8),dp(12),dp(8));rounded(miniPlayer,CARD);LinearLayout.LayoutParams miniLp=new LinearLayout.LayoutParams(-1,-2);miniLp.setMargins(dp(12),dp(4),dp(12),dp(8));shell.addView(miniPlayer,miniLp);
-  miniCover=cover(44);miniPlayer.addView(miniCover);miniCover.setOnClickListener(v->selectTab(1));miniTitle=text("Elige una canción",13,Color.WHITE);miniTitle.setMaxLines(1);miniTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);miniTitle.setPadding(dp(12),0,dp(8),0);miniPlayer.addView(miniTitle,new LinearLayout.LayoutParams(0,-2,1));miniTitle.setOnClickListener(v->selectTab(1));miniPlay=button("▶",this::togglePlayback);miniPlay.setContentDescription("Reproducir o pausar");miniPlayer.addView(miniPlay,new LinearLayout.LayoutParams(dp(56),dp(48)));
+  miniPlayer=new LinearLayout(this);miniPlayer.setGravity(Gravity.CENTER_VERTICAL);miniPlayer.setContentDescription("Reproductor: desliza hacia arriba para expandir");miniPlayer.setOnClickListener(v->setPlayerExpanded(true,true));miniPlayer.setPadding(dp(12),dp(8),dp(12),dp(8));rounded(miniPlayer,CARD);LinearLayout.LayoutParams miniLp=new LinearLayout.LayoutParams(-1,-2);miniLp.setMargins(dp(12),dp(4),dp(12),dp(8));shell.addView(miniPlayer,miniLp);
+  miniCover=cover(44);miniPlayer.addView(miniCover);miniCover.setOnClickListener(v->setPlayerExpanded(true,true));miniTitle=text("Elige una canción",13,Color.WHITE);miniTitle.setMaxLines(1);miniTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);miniTitle.setPadding(dp(12),0,dp(8),0);miniPlayer.addView(miniTitle,new LinearLayout.LayoutParams(0,-2,1));miniTitle.setOnClickListener(v->setPlayerExpanded(true,true));miniPlay=button("▶",this::togglePlayback);miniPlay.setContentDescription("Reproducir o pausar");miniPlayer.addView(miniPlay,new LinearLayout.LayoutParams(dp(56),dp(48)));
   LinearLayout navigation=new LinearLayout(this);navigation.setPadding(dp(4),dp(2),dp(4),dp(8));shell.addView(navigation);
-  String[] labels={"Biblioteca","Reproductor","Descargas","Ajustes"};String[] icons={"♫","◉","↓","⚙"};
-  for(int i=0;i<4;i++){final int tab=i;TextView item=text(icons[i]+"\n"+labels[i],11,MUTED);item.setGravity(Gravity.CENTER);item.setMinHeight(dp(56));item.setContentDescription(labels[i]);item.setOnClickListener(v->selectTab(tab));tabs[i]=item;navigation.addView(item,new LinearLayout.LayoutParams(0,-2,1));}
+  String[] labels={"Biblioteca","Descargas","Ajustes"};String[] icons={"♫","↓","⚙"};int[] destinations={0,2,3};
+  for(int i=0;i<3;i++){final int tab=destinations[i];TextView item=text(icons[i]+"\n"+labels[i],11,MUTED);item.setGravity(Gravity.CENTER);item.setMinHeight(dp(56));item.setContentDescription(labels[i]);item.setOnClickListener(v->selectTab(tab));tabs[tab]=item;navigation.addView(item,new LinearLayout.LayoutParams(0,-2,1));}
   selectTab(Math.max(0,Math.min(3,getPreferences(0).getInt("tab",0))));
  }
  private void renderSongs(){songs.removeAllViews();libraryCount.setText(tracks.size()+(tracks.size()==1?" canción":" canciones"));if(tracks.isEmpty()){LinearLayout empty=new LinearLayout(this);empty.setOrientation(LinearLayout.VERTICAL);empty.setGravity(Gravity.CENTER);empty.setPadding(dp(20),dp(40),dp(20),dp(40));ImageView art=cover(100);empty.addView(art);empty.addView(text("Tu próxima canción te espera",19,Color.WHITE));empty.addView(text("Importa música o añade un enlace en Descargas.",14,MUTED));songs.addView(empty);return;}
   for(int i=0;i<tracks.size();i++){final int n=i;Track t=tracks.get(i);LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(10),dp(10),dp(6),dp(10));rounded(row,CARD);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(8),0,0);songs.addView(row,lp);
    ImageView image=cover(58);row.addView(image);covers.bind(image,t,null);
    LinearLayout titles=new LinearLayout(this);titles.setOrientation(LinearLayout.VERTICAL);titles.setPadding(dp(12),0,dp(4),0);row.addView(titles,new LinearLayout.LayoutParams(0,-2,1));TextView title=text(t.title,15,Color.WHITE);title.setTypeface(null,Typeface.BOLD);title.setMaxLines(2);title.setEllipsize(android.text.TextUtils.TruncateAt.END);titles.addView(title);TextView subtitle=text(t.artist.isEmpty()?"Audio local":t.artist,12,MUTED);subtitle.setMaxLines(1);subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);titles.addView(subtitle);
-   View.OnClickListener listen=v->{if(player!=null){startService(new Intent(this,PlayerService.class));player.setQueue(tracks);player.play(n);selectTab(1);}};image.setOnClickListener(listen);titles.setOnClickListener(listen);
+   View.OnClickListener listen=v->{if(player!=null){startService(new Intent(this,PlayerService.class));player.setQueue(tracks);player.play(n);}};image.setOnClickListener(listen);titles.setOnClickListener(listen);
    TextView more=text("⋮",24,GOLD);more.setGravity(Gravity.CENTER);more.setContentDescription("Opciones de "+t.title);row.addView(more,new LinearLayout.LayoutParams(dp(48),dp(56)));more.setOnClickListener(v->new AlertDialog.Builder(this).setTitle(t.title).setItems(new String[]{"Elegir portada…","Guardar una copia…","Quitar de la biblioteca"},(d,w)->{if(w==0)chooseCover(t);else if(w==1)export(t);else{tracks.remove(t);save();renderSongs();if(player!=null){player.pause();player.setQueue(tracks);}}}).show());
   }
  }
@@ -249,7 +270,8 @@ public class MainActivity extends Activity {
  private void acceptShare(Intent i){if(Intent.ACTION_SEND.equals(i.getAction())){String s=i.getStringExtra(Intent.EXTRA_TEXT);if(s!=null){link.setText(s);selectTab(2);}}}
  @Override protected void onNewIntent(Intent i){super.onNewIntent(i);acceptShare(i);}
  private String clock(int ms){return String.format(Locale.ROOT,"%d:%02d",ms/60000,ms/1000%60);}
- private final Runnable tick=new Runnable(){public void run(){if(player!=null){now.setText(player.title());miniTitle.setText(player.title());play.setText(player.playing()?"Pausar":"Reproducir");miniPlay.setText(player.playing()?"Ⅱ":"▶");
+ private void refreshShuffle(){if(player!=null&&shuffleButton!=null){boolean enabled=player.shuffleEnabled();shuffleButton.setText(enabled?"⇄ Aleatorio: activado":"⇄ Aleatorio: desactivado");shuffleButton.setTextColor(enabled?GOLD:Color.rgb(241,231,218));shuffleButton.setContentDescription(enabled?"Desactivar modo aleatorio":"Activar modo aleatorio");}}
+ private final Runnable tick=new Runnable(){public void run(){if(player!=null){refreshShuffle();now.setText(player.title());miniTitle.setText(player.title());play.setText(player.playing()?"Pausar":"Reproducir");miniPlay.setText(player.playing()?"Ⅱ":"▶");
    Track current=player.currentTrack();String id=current==null?"empty":current.uri+"\n"+current.cover;
    if(!id.equals(shownCover)){shownCover=id;artist.setText(current==null||current.artist.isEmpty()?"Tu biblioteca":current.artist);covers.bind(playerCover,current,()->{if(player!=null)player.refreshArtwork();});covers.bind(miniCover,current,null);}
 if(!seeking){seek.setMax(Math.max(player.duration(),1));seek.setProgress(player.position());}time.setText(clock(player.position())+" / "+clock(player.duration()));if(!player.error.isEmpty()){toast(player.error);player.error="";}}handler.postDelayed(this,500);}};

@@ -1,3 +1,11 @@
+Pulso 0.9.0
+
+- Modo aleatorio con orden mezclado, historial para Anterior y preferencia guardada.
+- Navegación con Biblioteca, Descargas y Ajustes.
+- Reproductor desde la barrita inferior: deslizar arriba para expandir y abajo para reducir.
+- También permite tocar la barra, el tirador superior o Atrás.
+- Elegir una canción mantiene la biblioteca visible.
+
 Pulso 0.8.0
 
 - Añadir canciones confirma con un mensaje breve sin saltar a la lista.

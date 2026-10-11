@@ -14,10 +14,11 @@ public class PlayerService extends Service {
  public final ArrayList<Track> queue = new ArrayList<>();
  private MediaPlayer player; private MediaSession session; private AudioManager audio; private AudioFocusRequest focus;
  private String artworkKey="";private Bitmap artwork;
+ private final ShuffleOrder shuffled=new ShuffleOrder();private boolean shuffle;
  private int index=-1; private boolean preparing=false; public String error="";
  public class LocalBinder extends Binder { public PlayerService get() { return PlayerService.this; } }
  @Override public void onCreate() {
-  super.onCreate(); instance=this;
+  super.onCreate(); instance=this;shuffle=getSharedPreferences("playback",0).getBoolean("shuffle",false);
   getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel("player","Reproducción",NotificationManager.IMPORTANCE_LOW));
   audio=(AudioManager)getSystemService(AUDIO_SERVICE);
   AudioAttributes attrs=new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
@@ -39,7 +40,11 @@ public class PlayerService extends Service {
   if(i!=null && i.getAction()!=null) switch(i.getAction()) {case "toggle":toggle();break;case "next":next();break;case "prev":previous();break;}
   return START_NOT_STICKY;
  }
- public void setQueue(List<Track> tracks){String current=index>=0&&index<queue.size()?queue.get(index).uri:null;queue.clear();queue.addAll(tracks);if(current!=null){index=-1;for(int n=0;n<queue.size();n++)if(queue.get(n).uri.equals(current)){index=n;break;}}}
+ private List<String> urls(){List<String> ids=new ArrayList<>();for(Track t:queue)ids.add(t.uri);return ids;}
+ private void resetShuffle(){shuffled.reset(urls(),currentTrack()==null?null:currentTrack().uri);}
+ public boolean shuffleEnabled(){return shuffle;}
+ public void setShuffle(boolean enabled){shuffle=enabled;getSharedPreferences("playback",0).edit().putBoolean("shuffle",enabled).apply();resetShuffle();update();}
+ public void setQueue(List<Track> tracks){List<String> before=urls();String current=currentTrack()==null?null:currentTrack().uri;queue.clear();queue.addAll(tracks);index=-1;if(current!=null)for(int n=0;n<queue.size();n++)if(queue.get(n).uri.equals(current)){index=n;break;}if(!before.equals(urls()))resetShuffle();}
  public Track currentTrack(){return index>=0&&index<queue.size()?queue.get(index):null;}
  public void refreshArtwork(){artworkKey="";update();}
  public String title(){return index>=0&&index<queue.size()?queue.get(index).title:"Elige una canción";}
@@ -47,23 +52,26 @@ public class PlayerService extends Service {
  public int duration(){return player!=null&&!preparing?player.getDuration():0;}
  public int position(){return player!=null&&!preparing?player.getCurrentPosition():0;}
  public void seek(int p){if(player!=null&&!preparing)player.seekTo(p);}
- public void play(int n){
+ public void play(int n){playInternal(n,true);}
+ private void playInternal(int n,boolean selected){
   if(n<0||n>=queue.size())return;
   if(audio.requestAudioFocus(focus)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED){error="Otra aplicación está usando el audio.";return;}
-  if(player!=null)player.release();index=n;preparing=true;error="";
+  if(player!=null)player.release();index=n;if(selected)resetShuffle();preparing=true;error="";
   player=new MediaPlayer();
   player.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
   player.setOnPreparedListener(p->{preparing=false;p.start();update();});
-  player.setOnCompletionListener(p->{if(index+1<queue.size())next();else pause();});
+  player.setOnCompletionListener(p->{if(shuffle||index+1<queue.size())next();else pause();});
   player.setOnErrorListener((p,w,e)->{preparing=false;error="No se pudo reproducir este archivo. Prueba otra canción.";p.release();player=null;stopForeground(STOP_FOREGROUND_REMOVE);return true;});
   try{player.setDataSource(this,Uri.parse(queue.get(index).uri));update();player.prepareAsync();}
   catch(Exception e){preparing=false;error="No se puede abrir el archivo. Vuelve a importarlo.";player.release();player=null;stopForeground(STOP_FOREGROUND_REMOVE);}
  }
  public void toggle(){if(playing())pause();else resume();}
- public void resume(){if(player==null){if(!queue.isEmpty())play(Math.max(index,0));return;}if(!preparing&&audio.requestAudioFocus(focus)==AudioManager.AUDIOFOCUS_REQUEST_GRANTED){player.start();update();}}
+ public void resume(){if(player==null){if(!queue.isEmpty()){if(shuffle)next();else play(Math.max(index,0));}return;}if(!preparing&&audio.requestAudioFocus(focus)==AudioManager.AUDIOFOCUS_REQUEST_GRANTED){player.start();update();}}
  public void pause(){if(player!=null&&!preparing&&player.isPlaying())player.pause();update();}
- public void next(){if(!queue.isEmpty())play((index+1)%queue.size());}
- public void previous(){if(position()>3000)seek(0);else if(!queue.isEmpty())play((index-1+queue.size())%queue.size());}
+ private void playUri(String uri){if(uri!=null)for(int n=0;n<queue.size();n++)if(queue.get(n).uri.equals(uri)){playInternal(n,false);return;}}
+ public void next(){if(!queue.isEmpty()){if(shuffle)playUri(shuffled.next());else playInternal((index+1)%queue.size(),false);}}
+ public void previous(){if(position()>3000)seek(0);else if(!queue.isEmpty()){if(shuffle)playUri(shuffled.previous());else playInternal((index-1+queue.size())%queue.size(),false);}}
+
  private PendingIntent action(String a){return PendingIntent.getService(this,a.hashCode(),new Intent(this,PlayerService.class).setAction(a),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);}
  private void update(){
   if(player==null)return;
