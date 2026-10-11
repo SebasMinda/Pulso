@@ -35,7 +35,7 @@ public class MainActivity extends Activity {
  private final DownloadQueue downloadQueue=new DownloadQueue();
  private final ExecutorService lookups=Executors.newSingleThreadExecutor();
  private EditText query;private Button searchButton,moreResults,downloadAll,cancelBatch;private TextView searchStatus,queueCount;private LinearLayout searchRows,queueRows;
- private final List<Button> queueButtons=new ArrayList<>();private final List<StreamInfoItem> searchVideos=new ArrayList<>();private String searchTerm="";private org.schabi.newpipe.extractor.Page nextSearchPage;private boolean lookupBusy;
+ private final List<Button> queueButtons=new ArrayList<>();private final List<StreamInfoItem> searchVideos=new ArrayList<>();private String searchTerm="";private org.schabi.newpipe.extractor.Page nextSearchPage;private boolean lookupBusy,bulkLoading;private volatile boolean lookupCancelled;
  private File exportFile; private volatile AudioDownload audioDownload; private volatile boolean cancelled,busy;
  private final ServiceConnection connection=new ServiceConnection(){
   @Override public void onServiceConnected(ComponentName n,IBinder b){player=((PlayerService.LocalBinder)b).get();bound=true;player.setQueue(tracks);}
@@ -153,9 +153,11 @@ public class MainActivity extends Activity {
  }
  private EditText field(String hint){EditText e=new EditText(this);e.setTextColor(Color.WHITE);e.setHintTextColor(MUTED);e.setTextSize(14);e.setHint(hint);e.setSingleLine(true);e.setBackgroundTintList(android.content.res.ColorStateList.valueOf(GOLD));return e;}
  private void hideKeyboard(){android.view.inputmethod.InputMethodManager m=(android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);if(m!=null&&getCurrentFocus()!=null)m.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),0);}
+ private void scrollToSection(View child){pages[2].post(()->pages[2].smoothScrollTo(0,((View)child.getParent()).getTop()));}
+ private void saveLibraryAndQueue(){try{JSONArray a=new JSONArray();for(Track t:tracks)a.put(t.json());getPreferences(0).edit().putString("tracks",a.toString()).putString("downloadQueue",downloadQueue.json().toString()).apply();}catch(JSONException ignored){}}
  private void saveQueue(){try{getPreferences(0).edit().putString("downloadQueue",downloadQueue.json().toString()).apply();}catch(JSONException ignored){}}
  private void controls(){
-  boolean edit=!busy&&!lookupBusy;download.setEnabled(edit);downloadAll.setEnabled(edit&&!downloadQueue.pending().isEmpty());searchButton.setEnabled(!lookupBusy);moreResults.setEnabled(!lookupBusy);cancelBatch.setVisibility(busy?View.VISIBLE:View.GONE);
+  boolean edit=!busy&&!lookupBusy;download.setEnabled(edit);downloadAll.setEnabled(edit&&!downloadQueue.pending().isEmpty());searchButton.setEnabled(!lookupBusy);moreResults.setEnabled(!lookupBusy);cancelBatch.setText(bulkLoading?"Detener preparación":"Detener descargas");cancelBatch.setVisibility(busy||bulkLoading?View.VISIBLE:View.GONE);
   for(Button b:queueButtons)b.setEnabled(edit);
  }
  private void renderQueue(){
@@ -183,7 +185,7 @@ public class MainActivity extends Activity {
    if(more){org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage<org.schabi.newpipe.extractor.InfoItem> p=org.schabi.newpipe.extractor.search.SearchInfo.getMoreItems(ServiceList.YouTube,q,page);items=p.getItems();next=p.getNextPage();}
    else{org.schabi.newpipe.extractor.search.SearchInfo info=org.schabi.newpipe.extractor.search.SearchInfo.getInfo(ServiceList.YouTube,q);items=info.getRelatedItems();next=info.getNextPage();}
    List<StreamInfoItem> videos=new ArrayList<>();for(org.schabi.newpipe.extractor.InfoItem item:items)if(item instanceof StreamInfoItem)videos.add((StreamInfoItem)item);
-   ui(()->{if(!more)searchVideos.clear();Set<String> existing=new HashSet<>();for(StreamInfoItem v:searchVideos)existing.add(v.getUrl());for(StreamInfoItem v:videos)if(existing.add(v.getUrl())&&searchVideos.size()<200)searchVideos.add(v);searchTerm=term;nextSearchPage=next;lookupBusy=false;renderSearch();searchStatus.setText(searchVideos.isEmpty()?"No se encontraron videos. Prueba otro nombre.":searchVideos.size()+" resultados · "+term);controls();});
+   ui(()->{if(!more)searchVideos.clear();Set<String> existing=new HashSet<>();for(StreamInfoItem v:searchVideos)existing.add(v.getUrl());for(StreamInfoItem v:videos)if(existing.add(v.getUrl())&&searchVideos.size()<200)searchVideos.add(v);searchTerm=term;nextSearchPage=next;lookupBusy=false;renderSearch();if(!more)scrollToSection(searchRows);searchStatus.setText(searchVideos.isEmpty()?"No se encontraron videos. Prueba otro nombre.":searchVideos.size()+" resultados · "+term);controls();});
   }catch(Exception e){ui(()->{lookupBusy=false;searchStatus.setText("No se pudo buscar. Comprueba tu conexión y vuelve a intentar.");controls();});}});
  }
  private void renderSearch(){
@@ -203,7 +205,7 @@ public class MainActivity extends Activity {
   lookupBusy=true;controls();status.setText("Consultando las calidades disponibles…");hideKeyboard();
   lookups.execute(()->{try{StreamInfo info=StreamInfo.getInfo(ServiceList.YouTube,url);List<AudioStream> list=AudioChoice.available(info.getAudioStreams());if(list.isEmpty())throw new IOException("No hay audio compatible.");
    ui(()->{lookupBusy=false;controls();String[] options=new String[list.size()];for(int i=0;i<list.size();i++)options[i]=AudioChoice.of(list.get(i)).label;
-    new AlertDialog.Builder(this).setTitle(info.getName()).setItems(options,(d,w)->{if(busy)return;AudioChoice quality=AudioChoice.of(list.get(w));try{if(editing!=null){editing.quality=quality;editing.state=DownloadQueue.PENDING;editing.error="";}else downloadQueue.add(new DownloadQueue.Entry(url,info.getName(),thumbnail(info.getThumbnails()),info.getUploaderName()==null?"":info.getUploaderName(),quality));saveQueue();renderQueue();status.setText("Añadida a tu lista. Pulsa Descargar todo cuando estés listo.");}catch(IllegalStateException e){toast(e.getMessage());}}).setNegativeButton("Cerrar",null).show();status.setText("Elige calidad para añadirla a la lista.");});
+    new AlertDialog.Builder(this).setTitle(info.getName()).setItems(options,(d,w)->{if(busy)return;AudioChoice quality=AudioChoice.of(list.get(w));try{if(editing!=null){editing.quality=quality;editing.state=DownloadQueue.PENDING;editing.error="";}else downloadQueue.add(new DownloadQueue.Entry(url,info.getName(),thumbnail(info.getThumbnails()),info.getUploaderName()==null?"":info.getUploaderName(),quality));saveQueue();renderQueue();scrollToSection(queueRows);status.setText("Añadida a tu lista. Pulsa Descargar todo cuando estés listo.");}catch(IllegalStateException e){toast(e.getMessage());}}).setNegativeButton("Cerrar",null).show();status.setText("Elige calidad para añadirla a la lista.");});
   }catch(Exception e){ui(()->{lookupBusy=false;controls();status.setText("No se pudo consultar el audio. Revisa el enlace o vuelve a intentar.");});}});
  }
  private void pasteLinks(){
@@ -214,13 +216,13 @@ public class MainActivity extends Activity {
   if(busy||lookupBusy)return;Set<String> urls=new LinkedHashSet<>();int invalid=0;
   for(String line:raw.split("\\R"))if(!line.trim().isEmpty())try{urls.add(normalize(line));}catch(IllegalArgumentException e){invalid++;}
   if(urls.isEmpty()){toast("No hay enlaces válidos.");return;}if(urls.size()>100){toast("Agrega como máximo 100 enlaces a la vez.");return;}
-  final int invalidCount=invalid;lookupBusy=true;controls();status.setText("Preparando enlaces…");
+  final int invalidCount=invalid;lookupBusy=true;bulkLoading=true;lookupCancelled=false;cancelBatch.setEnabled(true);controls();status.setText("Preparando enlaces…");
   lookups.execute(()->{List<DownloadQueue.Entry> additions=new ArrayList<>();int errors=invalidCount;
-   for(String url:urls){if(Thread.currentThread().isInterrupted())return;try{StreamInfo info=StreamInfo.getInfo(ServiceList.YouTube,url);List<AudioStream> audio=AudioChoice.available(info.getAudioStreams());if(audio.isEmpty())throw new IOException();additions.add(new DownloadQueue.Entry(url,info.getName(),thumbnail(info.getThumbnails()),info.getUploaderName()==null?"":info.getUploaderName(),AudioChoice.of(audio.get(0))));}catch(Exception e){errors++;}}
-   final int failed=errors;ui(()->{int added=0,duplicates=0,full=0;for(DownloadQueue.Entry e:additions)try{if(downloadQueue.add(e))added++;else duplicates++;}catch(IllegalStateException e){full++;}lookupBusy=false;saveQueue();renderQueue();status.setText(added+" añadidas · "+duplicates+" ya estaban · "+(failed+full)+" no añadidas. Revisa Calidad antes de descargar.");});
+   int preparing=0;for(String url:urls){if(Thread.currentThread().isInterrupted())return;if(lookupCancelled)break;final int index=++preparing;ui(()->{if(!lookupCancelled)status.setText("Preparando enlace "+index+"/"+urls.size()+"…");});try{StreamInfo info=StreamInfo.getInfo(ServiceList.YouTube,url);List<AudioStream> audio=AudioChoice.available(info.getAudioStreams());if(audio.isEmpty())throw new IOException();additions.add(new DownloadQueue.Entry(url,info.getName(),thumbnail(info.getThumbnails()),info.getUploaderName()==null?"":info.getUploaderName(),AudioChoice.of(audio.get(0))));}catch(Exception e){errors++;}}
+   final int failed=errors;ui(()->{int added=0,duplicates=0,full=0;for(DownloadQueue.Entry e:additions)try{if(downloadQueue.add(e))added++;else duplicates++;}catch(IllegalStateException e){full++;}lookupBusy=false;bulkLoading=false;saveQueue();renderQueue();scrollToSection(queueRows);status.setText(added+" añadidas · "+duplicates+" ya estaban · "+(failed+full)+" no añadidas. Revisa Calidad antes de descargar.");});
   });
  }
- private void stopBatch(){cancelled=true;AudioDownload d=audioDownload;if(d!=null)d.cancel();status.setText("Deteniendo… Las canciones pendientes quedan en la lista.");cancelBatch.setEnabled(false);}
+ private void stopBatch(){if(bulkLoading){lookupCancelled=true;status.setText("Deteniendo preparación… Se conservarán los enlaces ya consultados.");cancelBatch.setEnabled(false);return;}cancelled=true;AudioDownload d=audioDownload;if(d!=null)d.cancel();status.setText("Deteniendo… Las canciones pendientes quedan en la lista.");cancelBatch.setEnabled(false);}
  private void startBatch(){
   if(busy||lookupBusy)return;final List<DownloadQueue.Entry> batch=downloadQueue.pending();if(batch.isEmpty()){toast("Agrega canciones a tu lista.");return;}cancelled=false;busy=true;cancelBatch.setEnabled(true);controls();status.setText("Preparando "+batch.size()+" canciones…");getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
   jobs.execute(()->{int done=0,failed=0;
@@ -232,7 +234,7 @@ public class MainActivity extends Activity {
      AudioDownload task=new AudioDownload(Net.CLIENT);audioDownload=task;if(cancelled)task.cancel();final long started=System.nanoTime();
      task.download(audio.getContent(),partial,(bytes,total)->{String message=String.format(Locale.ROOT,"%d/%d · %s\n%s · %.1f MB · %.0f KB/s",position,batch.size(),e.title,total>0?(bytes*100/total)+" %":"…",bytes/1048576.0,bytes/1024.0/Math.max(.1,(System.nanoTime()-started)/1e9));ui(()->{if(!cancelled)status.setText(message);});});
      if(cancelled)throw new IOException("Cancelado");if(!partial.renameTo(dest))throw new IOException("No se pudo guardar.");done++;
-     ui(()->{tracks.add(new Track(e.title,dest.toURI().toString(),e.cover,e.artist));save();renderSongs();if(player!=null)player.setQueue(tracks);downloadQueue.update(e.url,DownloadQueue.DONE,"");saveQueue();renderQueue();});
+     ui(()->{tracks.add(new Track(e.title,dest.toURI().toString(),e.cover,e.artist));downloadQueue.update(e.url,DownloadQueue.DONE,"");saveLibraryAndQueue();renderSongs();if(player!=null)player.setQueue(tracks);renderQueue();});
     }catch(Exception ex){if(partial!=null)partial.delete();if(cancelled||Thread.currentThread().isInterrupted()){ui(()->{downloadQueue.update(e.url,DownloadQueue.PENDING,"");saveQueue();renderQueue();});break;}failed++;final String reason=ex instanceof IOException&&ex.getMessage()!=null?ex.getMessage():"No disponible o sin conexión. Vuelve a intentar.";ui(()->{downloadQueue.update(e.url,DownloadQueue.FAILED,reason);saveQueue();renderQueue();});}
     finally{audioDownload=null;}
    }}finally{final int completed=done,errors=failed;ui(()->{busy=false;getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);renderQueue();status.setText((cancelled?"Detenido. ":"Lista terminada. ")+completed+" descargadas · "+errors+" fallidas. Las pendientes pueden reintentarse.");});}
