@@ -6,4 +6,4 @@ Reproductor superpuesto sobre el apartado actual, sin pestaña propia. Gesto ver
 
 Seis pruebas de orden aleatorio: cobertura de primera vuelta y vueltas posteriores, historial, cambio de vuelta, bibliotecas vacías o de un archivo y eliminación de canciones.
 
-Pendiente compilación, Lint, firma y prueba visual de gestos en Android.
+Compilación Release, 33 pruebas y Android Lint aprobados en GitHub. Firma estable, identidad y versión 0.9.0 verificadas localmente. Pendiente probar gestos, animación y reproducción aleatoria en Android.
