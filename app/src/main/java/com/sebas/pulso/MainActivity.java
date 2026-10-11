@@ -176,7 +176,7 @@ public class MainActivity extends Activity {
  }
  private EditText field(String hint){EditText e=new EditText(this);e.setTextColor(Color.WHITE);e.setHintTextColor(MUTED);e.setTextSize(14);e.setHint(hint);e.setSingleLine(true);e.setBackgroundTintList(android.content.res.ColorStateList.valueOf(GOLD));return e;}
  private void hideKeyboard(){android.view.inputmethod.InputMethodManager m=(android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);if(m!=null&&getCurrentFocus()!=null)m.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),0);}
- private void scrollToSection(View child){pages[2].post(()->pages[2].smoothScrollTo(0,((View)child.getParent()).getTop()));}
+ private void scrollToSection(View child){pages[2].post(()->((ScrollView)pages[2]).smoothScrollTo(0,((View)child.getParent()).getTop()));}
  private void renderQueueKeepingPosition(){
   final ScrollView page=(ScrollView)pages[2];final int y=page.getScrollY(),x=page.getScrollX();final View results=(View)searchRows.getParent();final int before=results.getTop();final boolean showingResults=y>=before-dp(24);
   renderQueue();page.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener(){public boolean onPreDraw(){if(page.getViewTreeObserver().isAlive())page.getViewTreeObserver().removeOnPreDrawListener(this);int delta=showingResults?results.getTop()-before:0;page.scrollTo(x,Math.max(0,y+delta));return true;}});
