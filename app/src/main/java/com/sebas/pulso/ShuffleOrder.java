@@ -13,7 +13,7 @@ public final class ShuffleOrder {
  public String next(){
   if(tracks.isEmpty())return null;
   if(cursor+1<history.size())return history.get(++cursor);
-  String current=cursor>=0?history.get(cursor):null;if(bag.isEmpty())fill(current);
+  String current=cursor>=0?history.get(cursor):null;if(bag.isEmpty()){bag.addAll(tracks);Collections.shuffle(bag,random);if(bag.size()>1&&bag.get(0).equals(current))Collections.swap(bag,0,1);}
   String next=bag.remove(0);history.add(next);cursor=history.size()-1;
   if(history.size()>512){history.remove(0);cursor--;}
   return next;

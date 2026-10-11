@@ -4,6 +4,6 @@ Modo aleatorio en PlayerService para botones de app, notificación, pantalla blo
 
 Reproductor superpuesto sobre el apartado actual, sin pestaña propia. Gesto vertical ascendente en minirreproductor para expandir y descendente en reproductor al inicio del scroll para reducir. La barra de progreso no activa el gesto. Animación corta y alternativas por toque y botón Atrás. Elegir canción conserva Biblioteca.
 
-Cinco pruebas de orden aleatorio: cobertura de vuelta, historial, cambio de vuelta, bibliotecas vacías o de un archivo y eliminación de canciones.
+Seis pruebas de orden aleatorio: cobertura de primera vuelta y vueltas posteriores, historial, cambio de vuelta, bibliotecas vacías o de un archivo y eliminación de canciones.
 
 Pendiente compilación, Lint, firma y prueba visual de gestos en Android.
