@@ -1,5 +1,5 @@
-# Validación de Pulso 0.5.0
+# Validación de Pulso 0.6.0
 
-Nueva paleta: fondo #080808, tarjetas #1A1414, botones #B91C28 y detalles #E8C068. El tema Android, icono y portada predeterminada usan los mismos colores. Texto blanco sobre botones rojos y texto dorado sobre fondos oscuros.
+Cambio visual: rojo oscuro con degradados suaves y dorado satinado. Efecto metálico nativo sin imágenes remotas ni animaciones continuas. Controles con respuesta al pulsar y estado deshabilitado. Conserva identidad y funciones, sin permisos nuevos.
 
-Conserva identidad, biblioteca y funciones. No agrega permisos. Compilación Release, pruebas existentes y Android Lint aprobados en GitHub. APK firmado localmente con apksigner, con certificado estable e identidad verificados. Versión 0.5.0, versionCode 5. La instalación y revisión visual en Android deben comprobarse en el teléfono.
+Pendiente: compilación, Android Lint y firma estable; revisión visual en el teléfono.

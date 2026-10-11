@@ -1,3 +1,10 @@
+Pulso 0.6.0
+
+- Rojo más oscuro con degradado metálico suave en botones y pestaña activa.
+- Dorado satinado en el logo, icono, portada predeterminada y control de posición.
+- Brillos discretos y respuesta al pulsar los botones.
+- Mantiene biblioteca, descargas, portadas y reproducción FLAC.
+
 Pulso 0.5.0
 
 - Nueva paleta negra, roja y dorada en las cuatro pestañas.

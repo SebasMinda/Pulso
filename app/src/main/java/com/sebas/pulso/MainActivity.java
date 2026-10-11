@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class MainActivity extends Activity {
- private final int BG=Color.rgb(8,8,8), CARD=Color.rgb(26,20,20), GOLD=Color.rgb(232,192,104), RED=Color.rgb(185,28,40), MUTED=Color.rgb(191,179,164);
+ private final int BG=Color.rgb(8,8,8), CARD=Color.rgb(26,20,20), GOLD=Color.rgb(201,173,114), RED=Color.rgb(87,25,35), MUTED=Color.rgb(191,179,164);
  private LinearLayout root, songs; private TextView now,status,time; private Button play,download; private SeekBar seek; private EditText link;
  private PlayerService player; private boolean bound, seeking; private final ArrayList<Track> tracks=new ArrayList<>();
  private Updater updater;
@@ -46,7 +46,21 @@ public class MainActivity extends Activity {
  private int dp(int n){return (int)(n*getResources().getDisplayMetrics().density);}
  private TextView text(String s,int size,int color){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setPadding(0,dp(5),0,dp(5));return t;}
  private void rounded(View v,int color){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(18));v.setBackground(d);}
- private Button button(String s,Runnable r){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setTextColor(Color.WHITE);rounded(b,RED);b.setOnClickListener(v->r.run());return b;}
+ private GradientDrawable metallicRed(boolean selected){
+  GradientDrawable d=new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,selected?new int[]{Color.rgb(60,28,31),Color.rgb(42,15,20),Color.rgb(27,12,15)}:new int[]{Color.rgb(111,39,49),Color.rgb(87,25,35),Color.rgb(48,13,21)});
+  d.setCornerRadius(dp(18));d.setStroke(dp(1),selected?Color.rgb(117,95,58):Color.rgb(127,66,67));return d;
+ }
+ private void goldMetal(TextView view){
+  view.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{
+   if(b>t){view.getPaint().setShader(new android.graphics.LinearGradient(0,0,0,b-t,new int[]{Color.rgb(169,139,83),Color.rgb(225,203,156),GOLD,Color.rgb(169,139,83)},new float[]{0,.38f,.58f,1},android.graphics.Shader.TileMode.CLAMP));view.invalidate();}
+  });
+ }
+ private Button button(String s,Runnable r){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setTextColor(Color.rgb(241,231,218));
+  android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();
+  GradientDrawable disabled=metallicRed(false);disabled.setAlpha(110);states.addState(new int[]{-android.R.attr.state_enabled},disabled);states.addState(new int[]{},metallicRed(false));
+  GradientDrawable mask=new GradientDrawable();mask.setColor(Color.WHITE);mask.setCornerRadius(dp(18));
+  b.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Color.argb(38,225,203,156)),states,mask));b.setOnClickListener(v->r.run());return b;}
+
  private LinearLayout section(){LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(18),dp(14),dp(18),dp(14));rounded(box,CARD);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(12),0,dp(8));root.addView(box,lp);return box;}
  private ImageView cover(int size){ImageView image=new ImageView(this);image.setScaleType(ImageView.ScaleType.CENTER_CROP);image.setImageResource(R.drawable.cover_placeholder);rounded(image,CARD);image.setClipToOutline(true);image.setContentDescription("Portada de la canción");image.setLayoutParams(new LinearLayout.LayoutParams(dp(size),dp(size)));return image;}
  private void page(int index,FrameLayout container){
@@ -54,13 +68,13 @@ public class MainActivity extends Activity {
   root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(dp(20),dp(12),dp(20),dp(24));sc.addView(root);container.addView(sc,new FrameLayout.LayoutParams(-1,-1));pages[index]=sc;
  }
  private void heading(String title,String subtitle){TextView h=text(title,30,Color.WHITE);h.setTypeface(null,Typeface.BOLD);root.addView(h);root.addView(text(subtitle,14,MUTED));}
- private void selectTab(int index){selectedTab=index;for(int i=0;i<4;i++){pages[i].setVisibility(i==index?View.VISIBLE:View.GONE);tabs[i].setTextColor(i==index?GOLD:MUTED);tabs[i].setTypeface(null,i==index?Typeface.BOLD:Typeface.NORMAL);rounded(tabs[i],i==index?Color.rgb(65,18,24):BG);tabs[i].setSelected(i==index);}miniPlayer.setVisibility(index==1?View.GONE:View.VISIBLE);}
+ private void selectTab(int index){selectedTab=index;for(int i=0;i<4;i++){pages[i].setVisibility(i==index?View.VISIBLE:View.GONE);tabs[i].setTextColor(i==index?GOLD:MUTED);tabs[i].setTypeface(null,i==index?Typeface.BOLD:Typeface.NORMAL);if(i==index)tabs[i].setBackground(metallicRed(true));else rounded(tabs[i],BG);tabs[i].setSelected(i==index);}miniPlayer.setVisibility(index==1?View.GONE:View.VISIBLE);}
  private void togglePlayback(){if(player!=null){startService(new Intent(this,PlayerService.class));player.toggle();}}
  private void build(){
   LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);shell.setBackgroundColor(BG);setContentView(shell);
   shell.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(0,insets.getSystemWindowInsetTop(),0,insets.getSystemWindowInsetBottom());return insets;});
   LinearLayout brand=new LinearLayout(this);brand.setGravity(Gravity.CENTER_VERTICAL);brand.setPadding(dp(20),dp(8),dp(20),dp(4));shell.addView(brand);
-  TextView logo=text("pulso",28,GOLD);logo.setTypeface(null,Typeface.BOLD);brand.addView(logo,new LinearLayout.LayoutParams(0,-2,1));brand.addView(text("TU MÚSICA",10,MUTED));
+  TextView logo=text("pulso",28,GOLD);logo.setTypeface(null,Typeface.BOLD);goldMetal(logo);brand.addView(logo,new LinearLayout.LayoutParams(0,-2,1));brand.addView(text("TU MÚSICA",10,MUTED));
   FrameLayout container=new FrameLayout(this);shell.addView(container,new LinearLayout.LayoutParams(-1,0,1));
 
   page(0,container);heading("Tu biblioteca","Tus canciones, siempre contigo.");
@@ -72,7 +86,7 @@ public class MainActivity extends Activity {
   int artSize=Math.min(300,Math.max(140,(int)(getResources().getDisplayMetrics().widthPixels/getResources().getDisplayMetrics().density)-80));
   playerCover=cover(artSize);LinearLayout.LayoutParams artLp=new LinearLayout.LayoutParams(dp(artSize),dp(artSize));artLp.gravity=Gravity.CENTER_HORIZONTAL;artLp.setMargins(0,dp(8),0,dp(20));box.addView(playerCover,artLp);
   now=text("Elige una canción",23,Color.WHITE);now.setTypeface(null,Typeface.BOLD);box.addView(now);artist=text("Tu biblioteca",14,MUTED);box.addView(artist);
-  seek=new SeekBar(this);seek.setProgressTintList(android.content.res.ColorStateList.valueOf(GOLD));seek.setThumbTintList(android.content.res.ColorStateList.valueOf(GOLD));box.addView(seek);time=text("0:00 / 0:00",12,MUTED);box.addView(time);
+  seek=new SeekBar(this);seek.setProgressTintList(android.content.res.ColorStateList.valueOf(GOLD));GradientDrawable goldThumb=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{Color.rgb(225,203,156),GOLD,Color.rgb(148,116,64)});goldThumb.setShape(GradientDrawable.OVAL);goldThumb.setSize(dp(20),dp(20));goldThumb.setStroke(dp(1),Color.rgb(145,116,65));seek.setThumb(goldThumb);box.addView(seek);time=text("0:00 / 0:00",12,MUTED);box.addView(time);
   seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar s,int p,boolean user){}public void onStartTrackingTouch(SeekBar s){seeking=true;}public void onStopTrackingTouch(SeekBar s){if(player!=null)player.seek(s.getProgress());seeking=false;}});
   LinearLayout controls=new LinearLayout(this);controls.setGravity(Gravity.CENTER);box.addView(controls);
   Button prev=button("◀",()->{if(player!=null)player.previous();});play=button("Reproducir",this::togglePlayback);Button next=button("▶",()->{if(player!=null)player.next();});prev.setContentDescription("Canción anterior");next.setContentDescription("Canción siguiente");

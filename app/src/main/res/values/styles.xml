@@ -1,6 +1,6 @@
 <resources>
  <style name="PulsoTheme" parent="android:style/Theme.Material.NoActionBar">
-  <item name="android:colorAccent">#E8C068</item>
+  <item name="android:colorAccent">#C9AD72</item>
   <item name="android:colorBackground">#080808</item>
   <item name="android:windowBackground">#080808</item>
   <item name="android:statusBarColor">#080808</item>
