@@ -1,5 +1,5 @@
-# Validación Pulso 0.9.1
+# Validación Pulso 0.10.0
 
-Reproductor expandido sin ScrollView. Portada cuadrada ajustada al espacio restante después de los controles. Título máximo de dos líneas y artista de una línea. Sin encabezado ni textos de ayuda. Conserva gestos y modo aleatorio.
+Animaciones breves de opacidad, posición visual y escala. Sin cambios en alturas ni posición de desplazamiento de la lista de descargas. Las acciones se ejecutan inmediatamente. Transiciones cancelables ante pulsaciones rápidas. Respeta ValueAnimator.areAnimatorsEnabled en Android 8 o posterior.
 
-Compilación Release, 33 pruebas y Android Lint aprobados en GitHub. Firma estable verificada localmente. Comprobación visual final en el teléfono.
+Pendientes compilación, pruebas, Lint y firma. Validación visual final en el teléfono.

@@ -27,7 +27,7 @@ public class MainActivity extends Activity {
  private CoverArt covers;
  private final ViewGroup[] pages=new ViewGroup[4];
  private final TextView[] tabs=new TextView[4];
- private int selectedTab;
+ private int selectedTab;private boolean navigationReady;
  private ImageView playerCover,miniCover;private TextView artist,miniTitle,libraryCount;private Button miniPlay;
  private Button shuffleButton;private boolean playerExpanded,gestureEligible,gestureConsumed;private float gestureX,gestureY;
  private LinearLayout miniPlayer;private Track coverTarget;private String shownCover="";
@@ -64,8 +64,23 @@ public class MainActivity extends Activity {
   android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();
   GradientDrawable disabled=metallicRed(false);disabled.setAlpha(110);states.addState(new int[]{-android.R.attr.state_enabled},disabled);states.addState(new int[]{},metallicRed(false));
   GradientDrawable mask=new GradientDrawable();mask.setColor(Color.WHITE);mask.setCornerRadius(dp(18));
-  b.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Color.argb(38,225,203,156)),states,mask));b.setOnClickListener(v->r.run());return b;}
+  b.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Color.argb(38,225,203,156)),states,mask));b.setOnClickListener(v->{pressFeedback(b);r.run();});return b;}
 
+ private boolean motionEnabled(){return android.animation.ValueAnimator.areAnimatorsEnabled();}
+ private void pressFeedback(View view){
+  view.animate().cancel();view.setScaleX(1);view.setScaleY(1);view.setAlpha(1);
+  if(!motionEnabled()||!view.isShown())return;
+  view.setScaleX(.96f);view.setScaleY(.96f);view.animate().scaleX(1).scaleY(1).setStartDelay(0).setDuration(170).setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+ }
+ private void reveal(View view,float offsetX,float offsetY){
+  view.animate().cancel();view.setScaleX(1);view.setScaleY(1);view.setAlpha(1);view.setTranslationX(0);view.setTranslationY(0);
+  if(!motionEnabled()||!view.isShown())return;
+  view.setAlpha(.55f);view.setTranslationX(offsetX);view.setTranslationY(offsetY);
+  view.animate().alpha(1).translationX(0).translationY(0).setStartDelay(0).setDuration(200).setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+ }
+ private void updateAnimatedText(TextView view,String value){
+  if(value.contentEquals(view.getText()))return;view.setText(value);reveal(view,0,0);
+ }
  private LinearLayout section(){LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(18),dp(14),dp(18),dp(14));rounded(box,CARD);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(12),0,dp(8));root.addView(box,lp);return box;}
  private ImageView cover(int size){ImageView image=new ImageView(this);image.setScaleType(ImageView.ScaleType.CENTER_CROP);image.setImageResource(R.drawable.cover_placeholder);rounded(image,CARD);image.setClipToOutline(true);image.setContentDescription("Portada de la canción");image.setLayoutParams(new LinearLayout.LayoutParams(dp(size),dp(size)));return image;}
  private void page(int index,FrameLayout container){
@@ -75,14 +90,16 @@ public class MainActivity extends Activity {
  private void heading(String title,String subtitle){TextView h=text(title,30,Color.WHITE);h.setTypeface(null,Typeface.BOLD);root.addView(h);root.addView(text(subtitle,14,MUTED));}
  private void selectTab(int index){
   if(index==1){setPlayerExpanded(true,true);return;}if(index!=0&&index!=2&&index!=3)index=0;
+  boolean changed=navigationReady&&selectedTab!=index;int previous=selectedTab;
   if(playerExpanded)setPlayerExpanded(false,false);selectedTab=index;
-  for(int i=0;i<4;i++){if(i!=1)pages[i].setVisibility(i==index?View.VISIBLE:View.GONE);if(tabs[i]!=null){tabs[i].setTextColor(i==index?GOLD:MUTED);tabs[i].setTypeface(null,i==index?Typeface.BOLD:Typeface.NORMAL);if(i==index)tabs[i].setBackground(metallicRed(true));else rounded(tabs[i],BG);tabs[i].setSelected(i==index);}}
+  for(int i=0;i<4;i++){if(i!=1){pages[i].animate().cancel();pages[i].setAlpha(1);pages[i].setTranslationX(0);pages[i].setTranslationY(0);pages[i].setVisibility(i==index?View.VISIBLE:View.GONE);}if(tabs[i]!=null){tabs[i].setTextColor(i==index?GOLD:MUTED);tabs[i].setTypeface(null,i==index?Typeface.BOLD:Typeface.NORMAL);if(i==index)tabs[i].setBackground(metallicRed(true));else rounded(tabs[i],BG);tabs[i].setSelected(i==index);}}
   pages[1].setVisibility(View.GONE);miniPlayer.setVisibility(View.VISIBLE);
+  if(changed){reveal(pages[index],dp(index>previous?12:-12),0);pressFeedback(tabs[index]);}
  }
  private void setPlayerExpanded(boolean expanded,boolean animate){
-  if(pages[1]==null||miniPlayer==null)return;playerExpanded=expanded;pages[1].animate().cancel();
-  if(expanded){hideKeyboard();pages[1].setVisibility(View.VISIBLE);pages[1].bringToFront();miniPlayer.setVisibility(View.GONE);if(animate){pages[1].setTranslationY(Math.max(dp(160),pages[1].getHeight()));pages[1].animate().translationY(0).setDuration(220).setInterpolator(new android.view.animation.DecelerateInterpolator()).start();}else pages[1].setTranslationY(0);}
-  else{miniPlayer.setVisibility(View.VISIBLE);if(animate){pages[1].animate().translationY(Math.max(dp(160),pages[1].getHeight())).setDuration(200).withEndAction(()->{if(!playerExpanded){pages[1].setVisibility(View.GONE);pages[1].setTranslationY(0);}}).start();}else{pages[1].setVisibility(View.GONE);pages[1].setTranslationY(0);}}
+  if(pages[1]==null||miniPlayer==null)return;animate=animate&&motionEnabled();playerExpanded=expanded;pages[1].animate().cancel();pages[1].setAlpha(1);miniPlayer.animate().cancel();miniPlayer.setAlpha(1);
+  if(expanded){hideKeyboard();pages[1].setVisibility(View.VISIBLE);pages[1].bringToFront();miniPlayer.setVisibility(View.GONE);if(animate){pages[1].setTranslationY(Math.max(dp(160),pages[1].getHeight()));pages[1].animate().translationY(0).setStartDelay(0).setDuration(300).setInterpolator(new android.view.animation.DecelerateInterpolator()).start();}else pages[1].setTranslationY(0);}
+  else{miniPlayer.setVisibility(View.VISIBLE);if(animate){reveal(miniPlayer,0,0);pages[1].animate().translationY(Math.max(dp(160),pages[1].getHeight())).setStartDelay(0).setDuration(240).setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator()).withEndAction(()->{if(!playerExpanded){pages[1].setVisibility(View.GONE);pages[1].setTranslationY(0);}}).start();}else{pages[1].setVisibility(View.GONE);pages[1].setTranslationY(0);}}
  }
  private boolean inside(View v,float x,float y){android.graphics.Rect r=new android.graphics.Rect();return v!=null&&v.getGlobalVisibleRect(r)&&r.contains((int)x,(int)y);}
  @Override public boolean dispatchTouchEvent(MotionEvent e){
@@ -133,9 +150,9 @@ public class MainActivity extends Activity {
   LinearLayout navigation=new LinearLayout(this);navigation.setPadding(dp(4),dp(2),dp(4),dp(8));shell.addView(navigation);
   String[] labels={"Biblioteca","Descargas","Ajustes"};String[] icons={"♫","↓","⚙"};int[] destinations={0,2,3};
   for(int i=0;i<3;i++){final int tab=destinations[i];TextView item=text(icons[i]+"\n"+labels[i],11,MUTED);item.setGravity(Gravity.CENTER);item.setMinHeight(dp(56));item.setContentDescription(labels[i]);item.setOnClickListener(v->selectTab(tab));tabs[tab]=item;navigation.addView(item,new LinearLayout.LayoutParams(0,-2,1));}
-  int initialTab=getPreferences(0).getInt("tab",0);selectTab(initialTab==1?0:initialTab);
+  int initialTab=getPreferences(0).getInt("tab",0);selectTab(initialTab==1?0:initialTab);navigationReady=true;
  }
- private void renderSongs(){songs.removeAllViews();libraryCount.setText(tracks.size()+(tracks.size()==1?" canción":" canciones"));if(tracks.isEmpty()){LinearLayout empty=new LinearLayout(this);empty.setOrientation(LinearLayout.VERTICAL);empty.setGravity(Gravity.CENTER);empty.setPadding(dp(20),dp(40),dp(20),dp(40));ImageView art=cover(100);empty.addView(art);empty.addView(text("Tu próxima canción te espera",19,Color.WHITE));empty.addView(text("Importa música o añade un enlace en Descargas.",14,MUTED));songs.addView(empty);return;}
+ private void renderSongs(){songs.removeAllViews();if(navigationReady)songs.post(()->reveal(songs,0,dp(8)));libraryCount.setText(tracks.size()+(tracks.size()==1?" canción":" canciones"));if(tracks.isEmpty()){LinearLayout empty=new LinearLayout(this);empty.setOrientation(LinearLayout.VERTICAL);empty.setGravity(Gravity.CENTER);empty.setPadding(dp(20),dp(40),dp(20),dp(40));ImageView art=cover(100);empty.addView(art);empty.addView(text("Tu próxima canción te espera",19,Color.WHITE));empty.addView(text("Importa música o añade un enlace en Descargas.",14,MUTED));songs.addView(empty);return;}
   for(int i=0;i<tracks.size();i++){final int n=i;Track t=tracks.get(i);LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(10),dp(10),dp(6),dp(10));rounded(row,CARD);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(8),0,0);songs.addView(row,lp);
    ImageView image=cover(58);row.addView(image);covers.bind(image,t,null);
    LinearLayout titles=new LinearLayout(this);titles.setOrientation(LinearLayout.VERTICAL);titles.setPadding(dp(12),0,dp(4),0);row.addView(titles,new LinearLayout.LayoutParams(0,-2,1));TextView title=text(t.title,15,Color.WHITE);title.setTypeface(null,Typeface.BOLD);title.setMaxLines(2);title.setEllipsize(android.text.TextUtils.TruncateAt.END);titles.addView(title);TextView subtitle=text(t.artist.isEmpty()?"Audio local":t.artist,12,MUTED);subtitle.setMaxLines(1);subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);titles.addView(subtitle);
@@ -181,7 +198,7 @@ public class MainActivity extends Activity {
   final ScrollView page=(ScrollView)pages[2];final int y=page.getScrollY(),x=page.getScrollX();final View results=(View)searchRows.getParent();final int before=results.getTop();final boolean showingResults=y>=before-dp(24);
   renderQueue();page.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener(){public boolean onPreDraw(){if(page.getViewTreeObserver().isAlive())page.getViewTreeObserver().removeOnPreDrawListener(this);int delta=showingResults?results.getTop()-before:0;page.scrollTo(x,Math.max(0,y+delta));return true;}});
  }
- private void confirmAdded(boolean edited){Toast.makeText(this,edited?"✓ Calidad actualizada":"✓ Añadida a tu lista",Toast.LENGTH_SHORT).show();}
+ private void confirmAdded(boolean edited){reveal(searchStatus,0,0);pressFeedback(downloadAll);Toast.makeText(this,edited?"✓ Calidad actualizada":"✓ Añadida a tu lista",Toast.LENGTH_SHORT).show();}
  private void saveLibraryAndQueue(){try{JSONArray a=new JSONArray();for(Track t:tracks)a.put(t.json());getPreferences(0).edit().putString("tracks",a.toString()).putString("downloadQueue",downloadQueue.json().toString()).apply();}catch(JSONException ignored){}}
  private void saveQueue(){try{getPreferences(0).edit().putString("downloadQueue",downloadQueue.json().toString()).apply();}catch(JSONException ignored){}}
  private void controls(){
@@ -217,7 +234,7 @@ public class MainActivity extends Activity {
   }catch(Exception e){ui(()->{lookupBusy=false;searchStatus.setText("No se pudo buscar. Comprueba tu conexión y vuelve a intentar.");controls();});}});
  }
  private void renderSearch(){
-  searchRows.removeAllViews();for(StreamInfoItem v:searchVideos){
+  searchRows.removeAllViews();searchRows.post(()->reveal(searchRows,0,dp(8)));for(StreamInfoItem v:searchVideos){
    LinearLayout item=new LinearLayout(this);item.setOrientation(LinearLayout.VERTICAL);item.setPadding(0,dp(10),0,dp(16));searchRows.addView(item);
    LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);item.addView(top);ImageView image=cover(88);image.setLayoutParams(new LinearLayout.LayoutParams(dp(112),dp(70)));top.addView(image);covers.bind(image,new Track(v.getName(),v.getUrl(),thumbnail(v.getThumbnails()),v.getUploaderName()),null);
    LinearLayout labels=new LinearLayout(this);labels.setOrientation(LinearLayout.VERTICAL);labels.setPadding(dp(12),0,0,0);top.addView(labels,new LinearLayout.LayoutParams(0,-2,1));TextView title=text(v.getName(),14,Color.WHITE);title.setMaxLines(3);title.setEllipsize(android.text.TextUtils.TruncateAt.END);labels.addView(title);labels.addView(text((v.getUploaderName()==null?"YouTube":v.getUploaderName())+" · "+duration(v.getDuration()),12,MUTED));
@@ -273,9 +290,9 @@ public class MainActivity extends Activity {
  @Override protected void onNewIntent(Intent i){super.onNewIntent(i);acceptShare(i);}
  private String clock(int ms){return String.format(Locale.ROOT,"%d:%02d",ms/60000,ms/1000%60);}
  private void refreshShuffle(){if(player!=null&&shuffleButton!=null){boolean enabled=player.shuffleEnabled();shuffleButton.setText(enabled?"⇄ Aleatorio: activado":"⇄ Aleatorio: desactivado");shuffleButton.setTextColor(enabled?GOLD:Color.rgb(241,231,218));shuffleButton.setContentDescription(enabled?"Desactivar modo aleatorio":"Activar modo aleatorio");}}
- private final Runnable tick=new Runnable(){public void run(){if(player!=null){refreshShuffle();now.setText(player.title());miniTitle.setText(player.title());play.setText(player.playing()?"Pausar":"Reproducir");miniPlay.setText(player.playing()?"Ⅱ":"▶");
+ private final Runnable tick=new Runnable(){public void run(){if(player!=null){refreshShuffle();updateAnimatedText(now,player.title());updateAnimatedText(miniTitle,player.title());updateAnimatedText(play,player.playing()?"Pausar":"Reproducir");updateAnimatedText(miniPlay,player.playing()?"Ⅱ":"▶");
    Track current=player.currentTrack();String id=current==null?"empty":current.uri+"\n"+current.cover;
-   if(!id.equals(shownCover)){shownCover=id;artist.setText(current==null||current.artist.isEmpty()?"Tu biblioteca":current.artist);covers.bind(playerCover,current,()->{if(player!=null)player.refreshArtwork();});covers.bind(miniCover,current,null);}
+   if(!id.equals(shownCover)){shownCover=id;updateAnimatedText(artist,current==null||current.artist.isEmpty()?"Tu biblioteca":current.artist);reveal(playerCover,0,0);reveal(miniCover,0,0);covers.bind(playerCover,current,()->{reveal(playerCover,0,0);if(player!=null)player.refreshArtwork();});covers.bind(miniCover,current,()->reveal(miniCover,0,0));}
 if(!seeking){seek.setMax(Math.max(player.duration(),1));seek.setProgress(player.position());}time.setText(clock(player.position())+" / "+clock(player.duration()));if(!player.error.isEmpty()){toast(player.error);player.error="";}}handler.postDelayed(this,500);}};
  @Override public void onDestroy(){getPreferences(0).edit().putInt("tab",selectedTab).apply();if(covers!=null)covers.close();if(updater!=null)updater.close();handler.removeCallbacksAndMessages(null);cancelled=true;AudioDownload d=audioDownload;if(d!=null)d.cancel();jobs.shutdownNow();lookups.shutdownNow();if(bound)unbindService(connection);super.onDestroy();}
 }

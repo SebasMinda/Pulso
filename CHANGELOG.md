@@ -1,3 +1,11 @@
+Pulso 0.10.0
+
+- Transiciones suaves entre apartados y al expandir o reducir el reproductor.
+- Respuesta breve al pulsar botones y activar el modo aleatorio.
+- Aparición suave de biblioteca y resultados, sin cambiar su posición de desplazamiento.
+- Cambio suave de título, controles y portada al cambiar de canción.
+- Respeta las animaciones desactivadas en Android; no hay efectos continuos.
+
 Pulso 0.9.1
 
 - Reproductor expandido en una sola vista, sin desplazamiento vertical.
