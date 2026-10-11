@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
   LinearLayout navigation=new LinearLayout(this);navigation.setPadding(dp(4),dp(2),dp(4),dp(8));shell.addView(navigation);
   String[] labels={"Biblioteca","Descargas","Ajustes"};String[] icons={"♫","↓","⚙"};int[] destinations={0,2,3};
   for(int i=0;i<3;i++){final int tab=destinations[i];TextView item=text(icons[i]+"\n"+labels[i],11,MUTED);item.setGravity(Gravity.CENTER);item.setMinHeight(dp(56));item.setContentDescription(labels[i]);item.setOnClickListener(v->selectTab(tab));tabs[tab]=item;navigation.addView(item,new LinearLayout.LayoutParams(0,-2,1));}
-  selectTab(Math.max(0,Math.min(3,getPreferences(0).getInt("tab",0))));
+  int initialTab=getPreferences(0).getInt("tab",0);selectTab(initialTab==1?0:initialTab);
  }
  private void renderSongs(){songs.removeAllViews();libraryCount.setText(tracks.size()+(tracks.size()==1?" canción":" canciones"));if(tracks.isEmpty()){LinearLayout empty=new LinearLayout(this);empty.setOrientation(LinearLayout.VERTICAL);empty.setGravity(Gravity.CENTER);empty.setPadding(dp(20),dp(40),dp(20),dp(40));ImageView art=cover(100);empty.addView(art);empty.addView(text("Tu próxima canción te espera",19,Color.WHITE));empty.addView(text("Importa música o añade un enlace en Descargas.",14,MUTED));songs.addView(empty);return;}
   for(int i=0;i<tracks.size();i++){final int n=i;Track t=tracks.get(i);LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(10),dp(10),dp(6),dp(10));rounded(row,CARD);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(8),0,0);songs.addView(row,lp);
