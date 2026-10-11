@@ -6,4 +6,4 @@ Descarga secuencial con tres conexiones por archivo, integridad validada por Aud
 
 Pruebas nuevas: persistencia de calidad por canción, recuperación de interrupciones, omisión de completadas, reintento de fallidas, duplicados, instantánea del lote, entradas dañadas, enlaces caducados y rechazo de cambio de calidad o pista.
 
-Pendiente compilación, Lint, firma y prueba real en Android. Las descargas siguen requiriendo mantener la app abierta.
+Compilación Release, 25 pruebas y Android Lint aprobados en GitHub. Firma estable, identidad y versión 0.7.0 verificadas localmente. No se ha probado la búsqueda real ni el lote en un teléfono; queda pendiente esa comprobación. Las descargas siguen requiriendo mantener la app abierta.
