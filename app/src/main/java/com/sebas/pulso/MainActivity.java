@@ -156,7 +156,7 @@ public class MainActivity extends Activity {
  private void scrollToSection(View child){pages[2].post(()->pages[2].smoothScrollTo(0,((View)child.getParent()).getTop()));}
  private void renderQueueKeepingPosition(){
   final ScrollView page=pages[2];final int y=page.getScrollY(),x=page.getScrollX();final View results=(View)searchRows.getParent();final int before=results.getTop();final boolean showingResults=y>=before-dp(24);
-  renderQueue();page.post(()->{int delta=showingResults?results.getTop()-before:0;page.scrollTo(x,Math.max(0,y+delta));});
+  renderQueue();page.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener(){public boolean onPreDraw(){if(page.getViewTreeObserver().isAlive())page.getViewTreeObserver().removeOnPreDrawListener(this);int delta=showingResults?results.getTop()-before:0;page.scrollTo(x,Math.max(0,y+delta));return true;}});
  }
  private void confirmAdded(boolean edited){Toast.makeText(this,edited?"✓ Calidad actualizada":"✓ Añadida a tu lista",Toast.LENGTH_SHORT).show();}
  private void saveLibraryAndQueue(){try{JSONArray a=new JSONArray();for(Track t:tracks)a.put(t.json());getPreferences(0).edit().putString("tracks",a.toString()).putString("downloadQueue",downloadQueue.json().toString()).apply();}catch(JSONException ignored){}}
