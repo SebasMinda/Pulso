@@ -25,7 +25,7 @@ public class MainActivity extends Activity {
  private PlayerService player; private boolean bound, seeking; private final ArrayList<Track> tracks=new ArrayList<>();
  private Updater updater;
  private CoverArt covers;
- private final ScrollView[] pages=new ScrollView[4];
+ private final ViewGroup[] pages=new ViewGroup[4];
  private final TextView[] tabs=new TextView[4];
  private int selectedTab;
  private ImageView playerCover,miniCover;private TextView artist,miniTitle,libraryCount;private Button miniPlay;
@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
  private boolean inside(View v,float x,float y){android.graphics.Rect r=new android.graphics.Rect();return v!=null&&v.getGlobalVisibleRect(r)&&r.contains((int)x,(int)y);}
  @Override public boolean dispatchTouchEvent(MotionEvent e){
   int action=e.getActionMasked();
-  if(action==MotionEvent.ACTION_DOWN){gestureX=e.getRawX();gestureY=e.getRawY();gestureConsumed=false;gestureEligible=playerExpanded?inside(pages[1],gestureX,gestureY)&&pages[1].getScrollY()==0&&!inside(seek,gestureX,gestureY):inside(miniPlayer,gestureX,gestureY);}
+  if(action==MotionEvent.ACTION_DOWN){gestureX=e.getRawX();gestureY=e.getRawY();gestureConsumed=false;gestureEligible=playerExpanded?inside(pages[1],gestureX,gestureY)&&!inside(seek,gestureX,gestureY):inside(miniPlayer,gestureX,gestureY);}
   if(action==MotionEvent.ACTION_MOVE&&gestureEligible&&!gestureConsumed){float dx=e.getRawX()-gestureX,dy=e.getRawY()-gestureY;if(Math.abs(dy)>dp(48)&&Math.abs(dy)>Math.abs(dx)*1.5f&&(playerExpanded?dy>0:dy<0)){MotionEvent cancel=MotionEvent.obtain(e);cancel.setAction(MotionEvent.ACTION_CANCEL);super.dispatchTouchEvent(cancel);cancel.recycle();gestureConsumed=true;setPlayerExpanded(!playerExpanded,true);}}
   if(gestureConsumed){if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL)gestureEligible=false;return true;}
   return super.dispatchTouchEvent(e);
@@ -105,18 +105,20 @@ public class MainActivity extends Activity {
   LinearLayout libraryRow=new LinearLayout(this);libraryRow.setGravity(Gravity.CENTER_VERTICAL);root.addView(libraryRow);libraryCount=text("0 canciones",13,MUTED);libraryRow.addView(libraryCount,new LinearLayout.LayoutParams(0,-2,1));libraryRow.addView(button("+ Importar",this::pick));
   songs=new LinearLayout(this);songs.setOrientation(LinearLayout.VERTICAL);root.addView(songs);root.addView(text("MP3 · M4A · FLAC · WAV · WebM/Opus",11,MUTED));renderSongs();
 
-  page(1,container);TextView handle=text("━",28,GOLD);handle.setGravity(Gravity.CENTER);handle.setContentDescription("Reducir reproductor");handle.setOnClickListener(v->setPlayerExpanded(false,true));root.addView(handle);heading("Ahora suena","Desliza hacia abajo para reducir.");
-  LinearLayout box=section();
-  int artSize=Math.min(300,Math.max(140,(int)(getResources().getDisplayMetrics().widthPixels/getResources().getDisplayMetrics().density)-80));
-  playerCover=cover(artSize);LinearLayout.LayoutParams artLp=new LinearLayout.LayoutParams(dp(artSize),dp(artSize));artLp.gravity=Gravity.CENTER_HORIZONTAL;artLp.setMargins(0,dp(8),0,dp(20));box.addView(playerCover,artLp);
-  now=text("Elige una canción",23,Color.WHITE);now.setTypeface(null,Typeface.BOLD);box.addView(now);artist=text("Tu biblioteca",14,MUTED);box.addView(artist);
-  seek=new SeekBar(this);seek.setProgressTintList(android.content.res.ColorStateList.valueOf(GOLD));GradientDrawable goldThumb=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{Color.rgb(225,203,156),GOLD,Color.rgb(148,116,64)});goldThumb.setShape(GradientDrawable.OVAL);goldThumb.setSize(dp(20),dp(20));goldThumb.setStroke(dp(1),Color.rgb(145,116,65));seek.setThumb(goldThumb);box.addView(seek);time=text("0:00 / 0:00",12,MUTED);box.addView(time);
+  FrameLayout playerPage=new FrameLayout(this);playerPage.setBackgroundColor(BG);container.addView(playerPage,new FrameLayout.LayoutParams(-1,-1));pages[1]=playerPage;
+  root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(dp(20),0,dp(20),dp(8));playerPage.addView(root,new FrameLayout.LayoutParams(-1,-1));
+  TextView handle=text("━",24,GOLD);handle.setPadding(0,0,0,0);handle.setGravity(Gravity.CENTER);handle.setContentDescription("Reducir reproductor");handle.setOnClickListener(v->setPlayerExpanded(false,true));root.addView(handle,new LinearLayout.LayoutParams(-1,dp(32)));
+  LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(16),dp(8),dp(16),dp(12));rounded(box,CARD);root.addView(box,new LinearLayout.LayoutParams(-1,0,1));
+  FrameLayout artSpace=new FrameLayout(this);LinearLayout.LayoutParams spaceLp=new LinearLayout.LayoutParams(-1,0,1);spaceLp.setMargins(0,0,0,dp(8));box.addView(artSpace,spaceLp);
+  playerCover=cover(0);artSpace.addView(playerCover,new FrameLayout.LayoutParams(0,0,Gravity.CENTER));
+  artSpace.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{int size=Math.max(0,Math.min(dp(300),Math.min(r-l,b-t)));FrameLayout.LayoutParams lp=(FrameLayout.LayoutParams)playerCover.getLayoutParams();if(lp.width!=size||lp.height!=size){lp.width=size;lp.height=size;playerCover.setLayoutParams(lp);}});
+  now=text("Elige una canción",21,Color.WHITE);now.setTypeface(null,Typeface.BOLD);now.setMaxLines(2);now.setEllipsize(android.text.TextUtils.TruncateAt.END);box.addView(now);artist=text("Tu biblioteca",14,MUTED);artist.setMaxLines(1);artist.setEllipsize(android.text.TextUtils.TruncateAt.END);box.addView(artist);
+  seek=new SeekBar(this);seek.setProgressTintList(android.content.res.ColorStateList.valueOf(GOLD));GradientDrawable goldThumb=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{Color.rgb(225,203,156),GOLD,Color.rgb(148,116,64)});goldThumb.setShape(GradientDrawable.OVAL);goldThumb.setSize(dp(20),dp(20));goldThumb.setStroke(dp(1),Color.rgb(145,116,65));seek.setThumb(goldThumb);box.addView(seek,new LinearLayout.LayoutParams(-1,dp(40)));time=text("0:00 / 0:00",12,MUTED);box.addView(time);
   seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar s,int p,boolean user){}public void onStartTrackingTouch(SeekBar s){seeking=true;}public void onStopTrackingTouch(SeekBar s){if(player!=null)player.seek(s.getProgress());seeking=false;}});
   LinearLayout controls=new LinearLayout(this);controls.setGravity(Gravity.CENTER);box.addView(controls);
   Button prev=button("◀",()->{if(player!=null)player.previous();});play=button("Reproducir",this::togglePlayback);Button next=button("▶",()->{if(player!=null)player.next();});prev.setContentDescription("Canción anterior");next.setContentDescription("Canción siguiente");
-  for(Button b:new Button[]{prev,play,next}){LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(56),b==play?2:1);lp.setMargins(dp(3),dp(8),dp(3),dp(8));controls.addView(b,lp);}
-  shuffleButton=button("Aleatorio: desactivado",()->{if(player!=null){player.setShuffle(!player.shuffleEnabled());refreshShuffle();}});box.addView(shuffleButton);
-  box.addView(text("La música sigue mientras navegas por las pestañas.",12,MUTED));
+  for(Button b:new Button[]{prev,play,next}){LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(56),b==play?2:1);lp.setMargins(dp(3),dp(4),dp(3),dp(4));controls.addView(b,lp);}
+  shuffleButton=button("Aleatorio: desactivado",()->{if(player!=null){player.setShuffle(!player.shuffleEnabled());refreshShuffle();}});box.addView(shuffleButton,new LinearLayout.LayoutParams(-1,dp(48)));
 
   page(2,container);buildDownloads();
 
@@ -176,7 +178,7 @@ public class MainActivity extends Activity {
  private void hideKeyboard(){android.view.inputmethod.InputMethodManager m=(android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);if(m!=null&&getCurrentFocus()!=null)m.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),0);}
  private void scrollToSection(View child){pages[2].post(()->pages[2].smoothScrollTo(0,((View)child.getParent()).getTop()));}
  private void renderQueueKeepingPosition(){
-  final ScrollView page=pages[2];final int y=page.getScrollY(),x=page.getScrollX();final View results=(View)searchRows.getParent();final int before=results.getTop();final boolean showingResults=y>=before-dp(24);
+  final ScrollView page=(ScrollView)pages[2];final int y=page.getScrollY(),x=page.getScrollX();final View results=(View)searchRows.getParent();final int before=results.getTop();final boolean showingResults=y>=before-dp(24);
   renderQueue();page.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener(){public boolean onPreDraw(){if(page.getViewTreeObserver().isAlive())page.getViewTreeObserver().removeOnPreDrawListener(this);int delta=showingResults?results.getTop()-before:0;page.scrollTo(x,Math.max(0,y+delta));return true;}});
  }
  private void confirmAdded(boolean edited){Toast.makeText(this,edited?"✓ Calidad actualizada":"✓ Añadida a tu lista",Toast.LENGTH_SHORT).show();}

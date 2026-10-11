@@ -1,3 +1,10 @@
+Pulso 0.9.1
+
+- Reproductor expandido en una sola vista, sin desplazamiento vertical.
+- Portada adaptada al espacio disponible y títulos largos limitados.
+- Retirados Ahora suena, su subtítulo y el texto inferior.
+- Conserva los gestos, controles y modo aleatorio.
+
 Pulso 0.9.0
 
 - Modo aleatorio con orden mezclado, historial para Anterior y preferencia guardada.
