@@ -19,6 +19,7 @@ public final class DownloadQueue {
  public boolean add(Entry e){for(Entry old:entries)if(old.url.equals(e.url))return false;if(entries.size()>=LIMIT)throw new IllegalStateException("La lista admite hasta 100 canciones.");entries.add(e);return true;}
  public List<Entry> pending(){List<Entry> result=new ArrayList<>();for(Entry e:entries)if(!DONE.equals(e.state))result.add(e.snapshot());return result;}
  public void update(String url,String state,String error){for(Entry e:entries)if(e.url.equals(url)){e.state=state;e.error=error;break;}}
+ public void complete(String url){entries.removeIf(e->e.url.equals(url));}
  public JSONArray json()throws JSONException{JSONArray a=new JSONArray();for(Entry e:entries)a.put(e.json());return a;}
- public void restore(JSONArray a){entries.clear();for(int i=0;i<Math.min(a.length(),LIMIT);i++)try{JSONObject o=a.getJSONObject(i);Entry e=new Entry(o.getString("url"),o.getString("title"),o.optString("cover",""),o.optString("artist",""),AudioChoice.fromJson(o.getJSONObject("quality")));e.state=o.optString("state",PENDING);e.error=o.optString("error","");if(RUNNING.equals(e.state)){e.state=PENDING;e.error="";}add(e);}catch(JSONException|IllegalStateException ignored){}}
+ public void restore(JSONArray a){entries.clear();for(int i=0;i<Math.min(a.length(),LIMIT);i++)try{JSONObject o=a.getJSONObject(i);Entry e=new Entry(o.getString("url"),o.getString("title"),o.optString("cover",""),o.optString("artist",""),AudioChoice.fromJson(o.getJSONObject("quality")));e.state=o.optString("state",PENDING);e.error=o.optString("error","");if(DONE.equals(e.state))continue;if(RUNNING.equals(e.state)){e.state=PENDING;e.error="";}add(e);}catch(JSONException|IllegalStateException ignored){}}
 }

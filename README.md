@@ -32,7 +32,7 @@ Pulso 0.1 usaba una firma de prueba cuya clave no se conservó. La distribución
 1. Pulsa **+ Importar** y selecciona tus canciones.
 2. En Biblioteca, toca una canción para abrir Reproductor y escucharla. Concede el permiso de notificaciones si quieres los controles fuera de la app.
 3. En Descargas, busca una canción o artista y pulsa **Agregar y elegir calidad** en el video elegido. También puedes pegar un enlace, compartir desde YouTube o usar **Pegar varios enlaces**.
-4. Revisa tu lista y cambia **Calidad** en cada canción si quieres. Pulsa **Descargar todo** y mantén Pulso abierta. **Detener descargas** conserva lo terminado y permite reiniciar lo pendiente. Las fallidas quedan en la lista para reintentar.
+4. Revisa tu lista y cambia **Calidad** en cada canción si quieres. Pulsa **Descargar todo** y mantén Pulso abierta. **Detener descargas** conserva lo terminado y permite reiniciar lo pendiente. Las fallidas quedan en la lista para reintentar. Las descargadas se quitan automáticamente de la lista y aparecen en la biblioteca.
 5. Con **⋮ → Guardar una copia…** puedes copiar una descarga a una carpeta del teléfono.
 6. En **Ajustes → Actualizaciones**, pulsa **Buscar actualizaciones**. Si hay una versión nueva, acepta su descarga y confirma la instalación. **Avisar al abrir Pulso** consulta como máximo una vez al día mientras abres la app.
 

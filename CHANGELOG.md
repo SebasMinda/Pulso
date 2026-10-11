@@ -1,3 +1,11 @@
+Pulso 0.8.0
+
+- Añadir canciones confirma con un mensaje breve sin saltar a la lista.
+- Mantiene la posición de los resultados cuando crece la lista.
+- Cada canción descargada sale automáticamente de la lista y queda en la biblioteca.
+- Al actualizar, limpia de la lista las completadas de versiones anteriores.
+- Las pendientes y fallidas se conservan.
+
 Pulso 0.7.0
 
 - Búsqueda de canciones y artistas en YouTube normal con imagen, canal, duración y más resultados.

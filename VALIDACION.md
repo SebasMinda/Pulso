@@ -1,9 +1,7 @@
-# Validación de Pulso 0.7.0
+# Validación de Pulso 0.8.0
 
-Búsqueda mediante NewPipeExtractor en YouTube normal, filtro videos. Resultados con miniatura, canal y duración; paginación hasta 200 resultados por consulta. Lista de hasta 100 videos con elección de formato, bitrate y pista de audio. La lista guarda preferencias, no direcciones CDN que caducan; se extrae un enlace nuevo al iniciar cada descarga. Una calidad que ya no existe se marca fallida sin cambiarla silenciosamente.
+Sin desplazamiento a la cola al añadir canciones. Mensaje Toast breve de confirmación y conservación de la posición de resultados tras cambiar el tamaño de la lista. El campo de búsqueda no recupera el foco al cerrar el diálogo de calidad.
 
-Descarga secuencial con tres conexiones por archivo, integridad validada por AudioDownload. Detener conserva lo terminado y deja pendientes para reiniciar. Una descarga interrumpida al cerrar vuelve a Pendiente al abrir. Las fallidas no detienen la lista y las completadas no se repiten. Edición bloqueada durante descargas y consultas. La búsqueda puede seguir durante el lote.
+Al terminar cada archivo, la biblioteca y la lista se guardan juntas; se retira solo esa canción de la lista. Las pendientes y fallidas se conservan. Al restaurar la lista de 0.7, se omiten sus entradas completadas. Dos pruebas adicionales comprueban limpieza selectiva y migración.
 
-Pruebas nuevas: persistencia de calidad por canción, recuperación de interrupciones, omisión de completadas, reintento de fallidas, duplicados, instantánea del lote, entradas dañadas, enlaces caducados y rechazo de cambio de calidad o pista.
-
-Compilación Release, 25 pruebas y Android Lint aprobados en GitHub. Firma estable, identidad y versión 0.7.0 verificadas localmente. No se ha probado la búsqueda real ni el lote en un teléfono; queda pendiente esa comprobación. Las descargas siguen requiriendo mantener la app abierta.
+Pendiente compilación, Lint, firma y revisión visual en Android.

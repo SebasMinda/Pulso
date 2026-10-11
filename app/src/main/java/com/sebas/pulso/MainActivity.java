@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
  private void selectTab(int index){selectedTab=index;for(int i=0;i<4;i++){pages[i].setVisibility(i==index?View.VISIBLE:View.GONE);tabs[i].setTextColor(i==index?GOLD:MUTED);tabs[i].setTypeface(null,i==index?Typeface.BOLD:Typeface.NORMAL);if(i==index)tabs[i].setBackground(metallicRed(true));else rounded(tabs[i],BG);tabs[i].setSelected(i==index);}miniPlayer.setVisibility(index==1?View.GONE:View.VISIBLE);}
  private void togglePlayback(){if(player!=null){startService(new Intent(this,PlayerService.class));player.toggle();}}
  private void build(){
-  LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);shell.setBackgroundColor(BG);setContentView(shell);
+  LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);shell.setBackgroundColor(BG);shell.setFocusableInTouchMode(true);setContentView(shell);
   shell.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(0,insets.getSystemWindowInsetTop(),0,insets.getSystemWindowInsetBottom());return insets;});
   LinearLayout brand=new LinearLayout(this);brand.setGravity(Gravity.CENTER_VERTICAL);brand.setPadding(dp(20),dp(8),dp(20),dp(4));shell.addView(brand);
   TextView logo=text("pulso",28,GOLD);logo.setTypeface(null,Typeface.BOLD);goldMetal(logo);brand.addView(logo,new LinearLayout.LayoutParams(0,-2,1));brand.addView(text("TU MÚSICA",10,MUTED));
@@ -154,6 +154,11 @@ public class MainActivity extends Activity {
  private EditText field(String hint){EditText e=new EditText(this);e.setTextColor(Color.WHITE);e.setHintTextColor(MUTED);e.setTextSize(14);e.setHint(hint);e.setSingleLine(true);e.setBackgroundTintList(android.content.res.ColorStateList.valueOf(GOLD));return e;}
  private void hideKeyboard(){android.view.inputmethod.InputMethodManager m=(android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);if(m!=null&&getCurrentFocus()!=null)m.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),0);}
  private void scrollToSection(View child){pages[2].post(()->pages[2].smoothScrollTo(0,((View)child.getParent()).getTop()));}
+ private void renderQueueKeepingPosition(){
+  final ScrollView page=pages[2];final int y=page.getScrollY(),x=page.getScrollX();final View results=(View)searchRows.getParent();final int before=results.getTop();final boolean showingResults=y>=before-dp(24);
+  renderQueue();page.post(()->{int delta=showingResults?results.getTop()-before:0;page.scrollTo(x,Math.max(0,y+delta));});
+ }
+ private void confirmAdded(boolean edited){Toast.makeText(this,edited?"✓ Calidad actualizada":"✓ Añadida a tu lista",Toast.LENGTH_SHORT).show();}
  private void saveLibraryAndQueue(){try{JSONArray a=new JSONArray();for(Track t:tracks)a.put(t.json());getPreferences(0).edit().putString("tracks",a.toString()).putString("downloadQueue",downloadQueue.json().toString()).apply();}catch(JSONException ignored){}}
  private void saveQueue(){try{getPreferences(0).edit().putString("downloadQueue",downloadQueue.json().toString()).apply();}catch(JSONException ignored){}}
  private void controls(){
@@ -202,10 +207,10 @@ public class MainActivity extends Activity {
   if(busy||lookupBusy){toast("Espera a que termine la tarea actual para editar la lista.");return;}
   final String url;try{url=normalize(raw);}catch(IllegalArgumentException e){toast(e.getMessage());return;}
   if(editing==null)for(DownloadQueue.Entry e:downloadQueue.entries)if(e.url.equals(url)){toast("Esta canción ya está en tu lista.");return;}
-  lookupBusy=true;controls();status.setText("Consultando las calidades disponibles…");hideKeyboard();
+  lookupBusy=true;controls();status.setText("Consultando las calidades disponibles…");hideKeyboard();query.clearFocus();link.clearFocus();((View)pages[2].getParent().getParent()).requestFocus();
   lookups.execute(()->{try{StreamInfo info=StreamInfo.getInfo(ServiceList.YouTube,url);List<AudioStream> list=AudioChoice.available(info.getAudioStreams());if(list.isEmpty())throw new IOException("No hay audio compatible.");
    ui(()->{lookupBusy=false;controls();String[] options=new String[list.size()];for(int i=0;i<list.size();i++)options[i]=AudioChoice.of(list.get(i)).label;
-    new AlertDialog.Builder(this).setTitle(info.getName()).setItems(options,(d,w)->{if(busy)return;AudioChoice quality=AudioChoice.of(list.get(w));try{if(editing!=null){editing.quality=quality;editing.state=DownloadQueue.PENDING;editing.error="";}else downloadQueue.add(new DownloadQueue.Entry(url,info.getName(),thumbnail(info.getThumbnails()),info.getUploaderName()==null?"":info.getUploaderName(),quality));saveQueue();renderQueue();scrollToSection(queueRows);status.setText("Añadida a tu lista. Pulsa Descargar todo cuando estés listo.");}catch(IllegalStateException e){toast(e.getMessage());}}).setNegativeButton("Cerrar",null).show();status.setText("Elige calidad para añadirla a la lista.");});
+    new AlertDialog.Builder(this).setTitle(info.getName()).setItems(options,(d,w)->{if(busy)return;AudioChoice quality=AudioChoice.of(list.get(w));try{if(editing!=null){editing.quality=quality;editing.state=DownloadQueue.PENDING;editing.error="";}else downloadQueue.add(new DownloadQueue.Entry(url,info.getName(),thumbnail(info.getThumbnails()),info.getUploaderName()==null?"":info.getUploaderName(),quality));saveQueue();renderQueueKeepingPosition();confirmAdded(editing!=null);status.setText("Lista guardada. Pulsa Descargar todo cuando estés listo.");}catch(IllegalStateException e){toast(e.getMessage());}}).setNegativeButton("Cerrar",null).show();status.setText("Elige calidad para añadirla a la lista.");});
   }catch(Exception e){ui(()->{lookupBusy=false;controls();status.setText("No se pudo consultar el audio. Revisa el enlace o vuelve a intentar.");});}});
  }
  private void pasteLinks(){
@@ -219,7 +224,7 @@ public class MainActivity extends Activity {
   final int invalidCount=invalid;lookupBusy=true;bulkLoading=true;lookupCancelled=false;cancelBatch.setEnabled(true);controls();status.setText("Preparando enlaces…");
   lookups.execute(()->{List<DownloadQueue.Entry> additions=new ArrayList<>();int errors=invalidCount;
    int preparing=0;for(String url:urls){if(Thread.currentThread().isInterrupted())return;if(lookupCancelled)break;final int index=++preparing;ui(()->{if(!lookupCancelled)status.setText("Preparando enlace "+index+"/"+urls.size()+"…");});try{StreamInfo info=StreamInfo.getInfo(ServiceList.YouTube,url);List<AudioStream> audio=AudioChoice.available(info.getAudioStreams());if(audio.isEmpty())throw new IOException();additions.add(new DownloadQueue.Entry(url,info.getName(),thumbnail(info.getThumbnails()),info.getUploaderName()==null?"":info.getUploaderName(),AudioChoice.of(audio.get(0))));}catch(Exception e){errors++;}}
-   final int failed=errors;ui(()->{int added=0,duplicates=0,full=0;for(DownloadQueue.Entry e:additions)try{if(downloadQueue.add(e))added++;else duplicates++;}catch(IllegalStateException limitError){full++;}lookupBusy=false;bulkLoading=false;saveQueue();renderQueue();scrollToSection(queueRows);status.setText(added+" añadidas · "+duplicates+" ya estaban · "+(failed+full)+" no añadidas. Revisa Calidad antes de descargar.");});
+   final int failed=errors;ui(()->{int added=0,duplicates=0,full=0;for(DownloadQueue.Entry e:additions)try{if(downloadQueue.add(e))added++;else duplicates++;}catch(IllegalStateException limitError){full++;}lookupBusy=false;bulkLoading=false;saveQueue();renderQueueKeepingPosition();Toast.makeText(this,added+" canciones añadidas",Toast.LENGTH_SHORT).show();status.setText(added+" añadidas · "+duplicates+" ya estaban · "+(failed+full)+" no añadidas. Revisa Calidad antes de descargar.");});
   });
  }
  private void stopBatch(){if(bulkLoading){lookupCancelled=true;status.setText("Deteniendo preparación… Se conservarán los enlaces ya consultados.");cancelBatch.setEnabled(false);return;}cancelled=true;AudioDownload d=audioDownload;if(d!=null)d.cancel();status.setText("Deteniendo… Las canciones pendientes quedan en la lista.");cancelBatch.setEnabled(false);}
@@ -234,7 +239,7 @@ public class MainActivity extends Activity {
      AudioDownload task=new AudioDownload(Net.CLIENT);audioDownload=task;if(cancelled)task.cancel();final long started=System.nanoTime();
      task.download(audio.getContent(),partial,(bytes,total)->{String message=String.format(Locale.ROOT,"%d/%d · %s\n%s · %.1f MB · %.0f KB/s",position,batch.size(),e.title,total>0?(bytes*100/total)+" %":"…",bytes/1048576.0,bytes/1024.0/Math.max(.1,(System.nanoTime()-started)/1e9));ui(()->{if(!cancelled)status.setText(message);});});
      if(cancelled)throw new IOException("Cancelado");if(!partial.renameTo(dest))throw new IOException("No se pudo guardar.");done++;
-     ui(()->{tracks.add(new Track(e.title,dest.toURI().toString(),e.cover,e.artist));downloadQueue.update(e.url,DownloadQueue.DONE,"");saveLibraryAndQueue();renderSongs();if(player!=null)player.setQueue(tracks);renderQueue();});
+     ui(()->{tracks.add(new Track(e.title,dest.toURI().toString(),e.cover,e.artist));downloadQueue.complete(e.url);saveLibraryAndQueue();renderSongs();if(player!=null)player.setQueue(tracks);renderQueue();});
     }catch(Exception ex){if(partial!=null)partial.delete();if(cancelled||Thread.currentThread().isInterrupted()){ui(()->{downloadQueue.update(e.url,DownloadQueue.PENDING,"");saveQueue();renderQueue();});break;}failed++;final String reason=ex instanceof IOException&&ex.getMessage()!=null?ex.getMessage():"No disponible o sin conexión. Vuelve a intentar.";ui(()->{downloadQueue.update(e.url,DownloadQueue.FAILED,reason);saveQueue();renderQueue();});}
     finally{audioDownload=null;}
    }}finally{final int completed=done,errors=failed;ui(()->{busy=false;getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);renderQueue();status.setText((cancelled?"Detenido. ":"Lista terminada. ")+completed+" descargadas · "+errors+" fallidas. Las pendientes pueden reintentarse.");});}
