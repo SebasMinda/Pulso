@@ -1,5 +1,5 @@
-# Validación Pulso 0.10.0
+# Validación Pulso 0.11.0
 
-Animaciones breves de opacidad, posición visual y escala. Sin cambios en alturas ni posición de desplazamiento de la lista de descargas. Las acciones se ejecutan inmediatamente. Transiciones cancelables ante pulsaciones rápidas. Respeta ValueAnimator.areAnimatorsEnabled en Android 8 o posterior.
+Cambio de tema en vivo sin reconstruir la pantalla, reiniciar el servicio ni cancelar descargas. Preferencias independientes para recuperar el tema personalizado después de escoger el clásico. Textos adaptados al fondo y botones.
 
-Compilación Release, 33 pruebas y Android Lint aprobados en GitHub. Firma estable verificada localmente. Pendiente validación visual de transiciones en el teléfono.
+Pendientes compilación, pruebas, Lint y firma. Validación visual final en el teléfono.

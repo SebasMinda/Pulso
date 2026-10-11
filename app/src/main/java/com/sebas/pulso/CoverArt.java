@@ -26,7 +26,10 @@ public final class CoverArt {
  private final LruCache<String,Bitmap> memory=new LruCache<String,Bitmap>(8*1024*1024){
   @Override protected int sizeOf(String k,Bitmap b){return b.getAllocationByteCount();}
  };
- private volatile boolean closed;
+ private volatile boolean closed;private int accent=ThemePalette.ACCENT;private final Map<ImageView,Boolean> placeholders=new WeakHashMap<>();
+ public void setAccent(int color){accent=color;for(Map.Entry<ImageView,Boolean> e:placeholders.entrySet())if(e.getValue())tintPlaceholder(e.getKey());}
+ private void tintPlaceholder(ImageView view){if(accent==ThemePalette.ACCENT)view.clearColorFilter();else view.setColorFilter(accent,PorterDuff.Mode.SRC_IN);}
+ private void showBitmap(ImageView view,Bitmap bitmap){placeholders.put(view,false);view.clearColorFilter();view.setImageBitmap(bitmap);}
  public CoverArt(Context context){this.context=context.getApplicationContext();}
  private static String key(Track t){return t.uri+"\n"+t.cover;}
  private static File file(Context c,Track t) throws Exception {
@@ -88,11 +91,11 @@ public final class CoverArt {
  }
  public void bind(ImageView view,Track track,Runnable loaded){
   if(closed)return;
-  String id=track==null?"":key(track);view.setTag(id);view.setImageResource(R.drawable.cover_placeholder);
+  String id=track==null?"":key(track);view.setTag(id);view.setImageResource(R.drawable.cover_placeholder);placeholders.put(view,true);tintPlaceholder(view);
   if(track==null)return;view.setContentDescription("Portada de "+track.title);
-  Bitmap bitmap=memory.get(id);if(bitmap!=null){view.setImageBitmap(fit(view,id,bitmap));return;}
+  Bitmap bitmap=memory.get(id);if(bitmap!=null){showBitmap(view,fit(view,id,bitmap));return;}
   if(missing.contains(id))return;
-  Runnable apply=()->{if(!closed&&id.equals(view.getTag())){Bitmap b=memory.get(id);if(b!=null){view.setImageBitmap(fit(view,id,b));if(loaded!=null)loaded.run();}}};
+  Runnable apply=()->{if(!closed&&id.equals(view.getTag())){Bitmap b=memory.get(id);if(b!=null){showBitmap(view,fit(view,id,b));if(loaded!=null)loaded.run();}}};
   List<Runnable> waiters=pending.get(id);if(waiters!=null){waiters.add(apply);return;}
   waiters=new ArrayList<>();waiters.add(apply);pending.put(id,waiters);
   // Snapshot prevents a chosen cover from changing an in-flight load's identity.

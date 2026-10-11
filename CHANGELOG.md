@@ -1,3 +1,11 @@
+Pulso 0.11.0
+
+- Apariencia en Ajustes: Pulso clásico y tema personalizado guardado.
+- Colores independientes para fondo, botones y detalles.
+- Selector RGB con vista previa, entrada hexadecimal y validación.
+- Aplicación inmediata sin interrumpir reproducción ni descargas.
+- Gradientes metálicos y textos adaptados; las portadas reales conservan sus colores.
+
 Pulso 0.10.0
 
 - Transiciones suaves entre apartados y al expandir o reducir el reproductor.
