@@ -4,6 +4,10 @@ Reproductor de música personal en español, con biblioteca local, audio de vide
 
 ## Funciones
 
+- Búsqueda de canciones y artistas en YouTube normal con miniaturas, canal, duración y paginación.
+- Lista persistente de descargas, calidad por canción, botón Descargar todo y reintento de fallidas.
+- Agregar enlaces individuales o pegar varios enlaces, uno por línea.
+
 - Reproducción de MP3, M4A, FLAC, WAV y WebM/Opus.
 - Pestañas Biblioteca, Reproductor, Descargas y Ajustes, con minirreproductor.
 - Portadas de los nuevos videos descargados, portadas incrustadas de archivos importados y elección manual de una imagen.
@@ -27,8 +31,8 @@ Pulso 0.1 usaba una firma de prueba cuya clave no se conservó. La distribución
 
 1. Pulsa **+ Importar** y selecciona tus canciones.
 2. En Biblioteca, toca una canción para abrir Reproductor y escucharla. Concede el permiso de notificaciones si quieres los controles fuera de la app.
-3. En Descargas, pega el enlace de un video o usa **Compartir → Pulso** y pulsa **Buscar audio**.
-4. Elige un formato y mantén Pulso abierta hasta que termine la descarga.
+3. En Descargas, busca una canción o artista y pulsa **Agregar y elegir calidad** en el video elegido. También puedes pegar un enlace, compartir desde YouTube o usar **Pegar varios enlaces**.
+4. Revisa tu lista y cambia **Calidad** en cada canción si quieres. Pulsa **Descargar todo** y mantén Pulso abierta. **Detener descargas** conserva lo terminado y permite reiniciar lo pendiente. Las fallidas quedan en la lista para reintentar.
 5. Con **⋮ → Guardar una copia…** puedes copiar una descarga a una carpeta del teléfono.
 6. En **Ajustes → Actualizaciones**, pulsa **Buscar actualizaciones**. Si hay una versión nueva, acepta su descarga y confirma la instalación. **Avisar al abrir Pulso** consulta como máximo una vez al día mientras abres la app.
 
@@ -39,7 +43,9 @@ Se conserva el formato original disponible: M4A suele contener AAC y WebM puede 
 Convertir audio comprimido a FLAC no recupera información perdida. Puedes importar FLAC que ya tengas, pero no se ofrece conversión de YouTube a FLAC.
 
 - Las descargas requieren mantener la app abierta y se cancelan al cerrar la actividad.
-- No hay búsqueda por nombre, ecualizador ni descarga de playlists.
+- No hay ecualizador ni importación automática de playlists. Puedes armar una lista propia desde resultados o enlaces.
+- La lista admite 100 canciones; cada búsqueda muestra hasta 200 resultados. Se descarga una canción por vez, con hasta tres conexiones por archivo.
+- Las calidades y videos disponibles dependen de YouTube. Si desaparece la calidad elegida, se pide cambiarla desde **Calidad**; no se sustituye silenciosamente.
 - Las descargas antiguas sin imagen guardada pueden usar **⋮ → Elegir portada…**. No se consulta automáticamente una portada de álbum por nombre.
 - La imagen de YouTube es la miniatura del video y puede no ser una portada oficial del álbum.
 - YouTube puede cambiar su sistema o restringir videos. Se rechazan respuestas que no sean audio; no se eluden inicios de sesión ni protección de contenido.
@@ -59,7 +65,7 @@ JDK 17 y Android SDK 35. Abre el proyecto en Android Studio o ejecuta:
 
 Para compilar una versión firmada, establece `PULSO_KEYSTORE_PATH` y `PULSO_KEYSTORE_PASSWORD`, y ejecuta `./gradlew :app:assembleRelease`. El alias es `pulso`; clave y almacén usan la misma contraseña. Nunca incluyas la clave privada en este repositorio.
 
-[GitHub Actions](.github/workflows/android.yml) ejecuta las comprobaciones con cada cambio en `main`. El método elegido es firmar localmente y publicar el APK y sus metadatos en Releases, sin secretos de firma en GitHub. La firma automática con dos secretos se conserva como alternativa opcional. Consulta [ACTUALIZACIONES.md](docs/ACTUALIZACIONES.md).
+[GitHub Actions](.github/workflows/android.yml) ejecuta las comprobaciones con cada cambio en `main`. El método elegido es firmar localmente y subir el APK a `.release/Pulso.apk`. El flujo de publicación comprueba la firma estable y publica el APK y sus metadatos en Releases, sin secretos de firma en GitHub. La firma automática con dos secretos se conserva como alternativa opcional. Consulta [ACTUALIZACIONES.md](docs/ACTUALIZACIONES.md).
 
 ## Licencia
 

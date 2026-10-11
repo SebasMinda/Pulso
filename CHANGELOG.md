@@ -1,3 +1,11 @@
+Pulso 0.7.0
+
+- Búsqueda de canciones y artistas en YouTube normal con imagen, canal, duración y más resultados.
+- Enlaces individuales o varios enlaces pegados, sin perder el buscador.
+- Lista persistente con calidad por canción y Descargar todo.
+- Descarga secuencial con progreso, detener y reintentar fallidas. No vuelve a descargar las completadas.
+- Conserva la apariencia metálica, biblioteca, firma estable y audio sin conversiones.
+
 Pulso 0.6.0
 
 - Rojo más oscuro con degradado metálico suave en botones y pestaña activa.
