@@ -1,0 +1,2 @@
+// Fija la versión del plugin Android para compilar todos los módulos.
+plugins { id 'com.android.application' version '8.9.2' apply false }

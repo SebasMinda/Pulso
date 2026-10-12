@@ -1,3 +1,9 @@
+Pulso 0.14.0
+
+- Marca PULSO centrada, en mayúsculas, con tipografía condensada y letras espaciadas.
+- Transición suave entre el nombre y la nota musical del icono de la app.
+- La marca respeta el color del tema y la desactivación de animaciones del sistema.
+
 Pulso 0.13.0
 
 - Deslizar a la izquierda cambia a la siguiente canción y a la derecha a la anterior, en el reproductor expandido y la barra inferior.
