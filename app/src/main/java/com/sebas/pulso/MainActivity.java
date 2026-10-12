@@ -70,7 +70,7 @@ public class MainActivity extends Activity {
  }
  private Button button(String s,Runnable r){Button b=new Button(this);b.setText(s);b.setAllCaps(false);themedButtons.add(b);paintButton(b);b.setOnClickListener(v->{pressFeedback(b);r.run();});return b;}
  private void spacedButton(LinearLayout parent,Button b){LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(10),0,0);b.setMinHeight(dp(48));parent.addView(b,lp);}
- private void togglePanel(View panel){panel.setVisibility(panel.getVisibility()==View.VISIBLE?View.GONE:View.VISIBLE);}
+ private void togglePanel(View panel){boolean opening=panel.getVisibility()!=View.VISIBLE;panel.setVisibility(opening?View.VISIBLE:View.GONE);if(opening)pages[2].post(()->((ScrollView)pages[2]).smoothScrollTo(0,panel.getTop()));}
  private void downloadStatus(String message){status.setText(message);downloadProgress.setVisibility(View.VISIBLE);}
 
  private void loadTheme(){boolean custom=getPreferences(0).getBoolean("theme.custom",false);palette=custom?new ThemePalette(getPreferences(0).getInt("theme.background",BG),getPreferences(0).getInt("theme.button",RED),getPreferences(0).getInt("theme.accent",GOLD)):new ThemePalette(BG,RED,GOLD);}
