@@ -58,6 +58,10 @@ Convertir audio comprimido a FLAC no recupera información perdida. Puedes impor
 
 Descarga únicamente material propio o con permiso. Pulso no está afiliada a YouTube, Google ni NewPipe.
 
+## Guía del código
+
+Consulta [el mapa de archivos de Pulso](docs/MAPA_DEL_PROYECTO.md) para entender qué hace cada archivo y cómo se conectan biblioteca, descargas, portadas y reproducción. El código propio incluye comentarios simples en español.
+
 ## Desarrollo
 
 JDK 17 y Android SDK 35. Abre el proyecto en Android Studio o ejecuta:

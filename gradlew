@@ -1,4 +1,5 @@
 #!/bin/sh
+# Inicia Gradle con la versión fijada por el proyecto en Linux y macOS.
 
 #
 # Copyright © 2015-2021 the original authors.

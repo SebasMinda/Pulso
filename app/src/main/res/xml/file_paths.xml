@@ -1,3 +1,4 @@
+<!-- Permite compartir con el instalador solo los archivos de la carpeta temporal de actualizaciones. -->
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
  <cache-path name="updates" path="updates/"/>
 </paths>

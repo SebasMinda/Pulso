@@ -1,3 +1,4 @@
+# Al cambiar .release/Pulso.apk en main, valida el APK firmado y publica la versión.
 name: Publicar APK firmado localmente
 
 on:

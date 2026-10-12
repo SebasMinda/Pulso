@@ -1,14 +1,18 @@
+<!-- Declara permisos, pantalla de entrada, servicio de música y acceso al APK de actualización. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+ <!-- Internet para búsqueda y descargas; servicio y notificaciones para la reproducción. -->
  <uses-permission android:name="android.permission.INTERNET"/>
  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+ <!-- Android solicita al usuario permiso y confirmación para instalar actualizaciones. -->
  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
  <application android:label="Pulso" android:theme="@style/PulsoTheme" android:icon="@drawable/icon" android:allowBackup="false" android:supportsRtl="true" android:usesCleartextTraffic="false">
   <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize">
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
    <intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="text/plain"/></intent-filter>
   </activity>
+  <!-- Mantiene la música y sus controles fuera de la pantalla principal. -->
   <service android:name=".PlayerService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
   <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true">
    <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/>

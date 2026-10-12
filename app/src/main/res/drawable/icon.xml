@@ -1,3 +1,4 @@
+<!-- Icono vectorial de Pulso: una nota musical dorada sobre fondo oscuro. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
  <path android:fillColor="#080808" android:pathData="M0,0h48v48h-48z"/>
  <path android:pathData="M19,10L37,7L37,29C37,37 25,37 25,31C25,27 29,25 33,26L33,15L23,17L23,34C23,42 11,42 11,36C11,32 15,30 19,31Z">

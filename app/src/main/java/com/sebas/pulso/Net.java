@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import okhttp3.*;
 
+/** Adapta las peticiones de NewPipe a OkHttp para consultar videos y formatos de audio. */
 public final class Net extends Downloader {
  static final OkHttpClient CLIENT = new OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS).readTimeout(45,TimeUnit.SECONDS).build();
+ // Envía la petición con OkHttp y devuelve a NewPipe el texto, las cabeceras y el estado.
  @Override public Response execute(Request req) throws IOException {
   okhttp3.Request.Builder b = new okhttp3.Request.Builder().url(req.url()).header("User-Agent","Mozilla/5.0");
   req.headers().forEach((k,vs)->vs.forEach(v->b.addHeader(k,v)));

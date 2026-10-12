@@ -1,3 +1,4 @@
+<!-- Portada de reemplazo que aparece cuando una canción no tiene imagen. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:width="300dp" android:height="300dp" android:viewportWidth="300" android:viewportHeight="300">
  <path android:fillColor="#1A1414" android:pathData="M0,0h300v300h-300z"/>
  <path android:fillColor="#39171D" android:pathData="M0,210L300,30v270H0z"/>

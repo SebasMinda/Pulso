@@ -1,11 +1,17 @@
+# Evita subir cachés, archivos generados, configuración local y claves privadas.
+# El código y el APK de publicación en .release/ sí se mantienen en Git.
+# Cachés y resultados de compilación.
 .gradle/
 build/
 app/build/
+# Ruta del SDK de Android de cada equipo.
 local.properties
+# Material privado de firma: nunca se publica.
 *.jks
 *.keystore
 private-signing/
 signing-password.txt
 keystore-base64.txt
+# Archivos generados al ejecutar Python.
 __pycache__/
 *.pyc

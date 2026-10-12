@@ -2,6 +2,7 @@ package com.sebas.pulso;
 import org.json.JSONObject;
 import org.junit.Test;
 import static org.junit.Assert.*;
+/** Comprueba que la biblioteca conserve los datos y acepte canciones de versiones antiguas. */
 public class TrackTest {
  @Test public void oldLibraryLoadsWithoutLosingSongs() throws Exception {
   Track t=Track.fromJson(new JSONObject("{\"title\":\"Mi canción\",\"uri\":\"file:///music/song.m4a\"}"));

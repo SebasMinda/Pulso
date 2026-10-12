@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.*;
 import okhttp3.*;
 
-/** Copies original audio bytes, using bounded parallel ranges when supported. */
+/** Descarga el audio original por partes; si el servidor no lo permite, usa una sola conexión. */
 public final class AudioDownload {
  private static final int CHUNK = 1024 * 1024, PROBE = 256 * 1024;
  private final OkHttpClient client;
@@ -17,6 +17,7 @@ public final class AudioDownload {
  private volatile boolean cancelled;
  public interface Progress { void update(long done, long total); }
  public AudioDownload(OkHttpClient client) { this.client = client; }
+ // Marca la descarga como cancelada y detiene sus peticiones de red.
  public void cancel() { cancelled = true; for (Call c : calls) c.cancel(); }
  private void check() throws IOException {
   if (cancelled || Thread.currentThread().isInterrupted()) throw new IOException("Cancelado");
@@ -31,6 +32,7 @@ public final class AudioDownload {
   if (cancelled) { c.cancel(); calls.remove(c); check(); }
   return c;
  }
+ // Valida la respuesta parcial y lee sus límites y el tamaño total.
  private static long[] range(Response r) throws IOException {
   Matcher m = Pattern.compile("bytes (\\d+)-(\\d+)/(\\d+)").matcher(r.header("Content-Range", ""));
   if (r.code() != 206 || !m.matches()) throw new IOException("El servidor no admite partes exactas");
@@ -40,6 +42,7 @@ public final class AudioDownload {
    return new long[]{a,b,n};
   } catch(NumberFormatException e) { throw new IOException("Rango inválido", e); }
  }
+ // Intenta descargar por partes, comprueba el formato y elimina el archivo si falla.
  public void download(String url, File file, Progress progress) throws IOException {
   boolean success=false;
   try {
@@ -48,6 +51,7 @@ public final class AudioDownload {
    check(); validate(file); success=true;
   } finally { if(!success) file.delete(); }
  }
+ // Prueba el soporte de partes y reparte los bloques entre hasta tres conexiones.
  private void ranged(String url, File file, Progress progress) throws IOException {
   long total, first;
   String validator;
@@ -97,12 +101,13 @@ public final class AudioDownload {
    for(Future<Void> f:futures) f.cancel(true);
    for(Call c:calls) c.cancel();
    pool.shutdownNow();
-   // Workers must close their files before a sequential fallback can overwrite them.
+   // Espera a que las tareas cierren sus archivos antes de reescribir con una sola conexión.
    boolean interrupted=Thread.interrupted();
    try { while(!pool.isTerminated()) { try { pool.awaitTermination(1,TimeUnit.SECONDS); } catch(InterruptedException e) { interrupted=true; } } }
    finally { if(interrupted) Thread.currentThread().interrupt(); }
   }
  }
+ // Escribe una parte en su posición y comprueba que llegue completa.
  private void write(Response r, RandomAccessFile out, long offset, long count) throws IOException {
   if(r.body()==null) throw new IOException("Sin audio");
   out.seek(offset); byte[] buffer=new byte[65536]; long written=0;
@@ -115,6 +120,7 @@ public final class AudioDownload {
   }
   if(written!=count) throw new IOException("Parte incompleta");
  }
+ // Copia el archivo con una conexión e informa el progreso.
  private void single(String url, File file, Progress progress) throws IOException {
   Call c=call(url,null,null);
   try(Response r=c.execute()) {
@@ -132,6 +138,7 @@ public final class AudioDownload {
    progress.update(done,total);
   } finally { calls.remove(c); }
  }
+ // Comprueba la cabecera WebM o MP4 para rechazar respuestas de otro formato.
  private static void validate(File file) throws IOException {
   byte[] head=new byte[12];
   try(DataInputStream in=new DataInputStream(new FileInputStream(file))) { in.readFully(head); }

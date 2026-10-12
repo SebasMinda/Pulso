@@ -1,3 +1,4 @@
+# Comprueba la app y genera APKs; puede publicar una versión usando secretos de firma.
 name: Android
 
 on:

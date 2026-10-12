@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import static org.junit.Assert.*;
 
+/** Comprueba versión, enlaces permitidos, tamaño y huella de la actualización. */
 public class UpdateSpecTest {
     private JSONObject metadata(byte[] bytes) throws Exception {
         StringBuilder hash = new StringBuilder();

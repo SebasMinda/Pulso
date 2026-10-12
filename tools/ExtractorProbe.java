@@ -3,7 +3,8 @@ import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.ServiceList;
 import org.schabi.newpipe.extractor.stream.StreamInfo;
 
-// Comprobación de integración; no descarga la película.
+// Consulta los formatos de audio de un enlace para comprobar la integración con NewPipe.
+// Con un segundo argumento descarga el audio elegido al archivo indicado; exige cabecera WebM.
 public class ExtractorProbe {
  public static void main(String[] args) throws Exception {
   NewPipe.init(new Net());

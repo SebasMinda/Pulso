@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.os.*;
 import java.util.*;
 
+/** Reproduce canciones en segundo plano y ofrece controles en la notificación de Android. */
 public class PlayerService extends Service {
  public static PlayerService instance;
  public final ArrayList<Track> queue = new ArrayList<>();
@@ -17,6 +18,7 @@ public class PlayerService extends Service {
  private final ShuffleOrder shuffled=new ShuffleOrder();private boolean shuffle;
  private int index=-1; private boolean preparing=false; public String error="";
  public class LocalBinder extends Binder { public PlayerService get() { return PlayerService.this; } }
+ // Prepara el audio, la sesión multimedia y el canal de notificaciones.
  @Override public void onCreate() {
   super.onCreate(); instance=this;shuffle=getSharedPreferences("playback",0).getBoolean("shuffle",false);
   getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel("player","Reproducción",NotificationManager.IMPORTANCE_LOW));
@@ -36,6 +38,7 @@ public class PlayerService extends Service {
  }
  private final BroadcastReceiver noisy=new BroadcastReceiver(){@Override public void onReceive(Context c,Intent i){pause();}};
  @Override public IBinder onBind(Intent i){return new LocalBinder();}
+ // Recibe las acciones de los controles de la notificación.
  @Override public int onStartCommand(Intent i,int flags,int id){
   if(i!=null && i.getAction()!=null) switch(i.getAction()) {case "toggle":toggle();break;case "next":next();break;case "prev":previous();break;}
   return START_NOT_STICKY;
@@ -43,16 +46,21 @@ public class PlayerService extends Service {
  private List<String> urls(){List<String> ids=new ArrayList<>();for(Track t:queue)ids.add(t.uri);return ids;}
  private void resetShuffle(){shuffled.reset(urls(),currentTrack()==null?null:currentTrack().uri);}
  public boolean shuffleEnabled(){return shuffle;}
+ // Guarda el modo aleatorio y reinicia su orden.
  public void setShuffle(boolean enabled){shuffle=enabled;getSharedPreferences("playback",0).edit().putBoolean("shuffle",enabled).apply();resetShuffle();update();}
+ // Actualiza la lista conservando la canción actual si todavía existe.
  public void setQueue(List<Track> tracks){List<String> before=urls();String current=currentTrack()==null?null:currentTrack().uri;queue.clear();queue.addAll(tracks);index=-1;if(current!=null)for(int n=0;n<queue.size();n++)if(queue.get(n).uri.equals(current)){index=n;break;}if(!before.equals(urls()))resetShuffle();}
  public Track currentTrack(){return index>=0&&index<queue.size()?queue.get(index):null;}
+ // Fuerza a recargar la portada local de la notificación.
  public void refreshArtwork(){artworkKey="";update();}
  public String title(){return index>=0&&index<queue.size()?queue.get(index).title:"Elige una canción";}
  public boolean playing(){return player!=null&&!preparing&&player.isPlaying();}
  public int duration(){return player!=null&&!preparing?player.getDuration():0;}
  public int position(){return player!=null&&!preparing?player.getCurrentPosition():0;}
+ // Cambia la posición del audio cuando el reproductor ya está preparado.
  public void seek(int p){if(player!=null&&!preparing)player.seekTo(p);}
  public void play(int n){playInternal(n,true);}
+ // Abre el archivo y prepara el audio sin bloquear; informa si falla.
  private void playInternal(int n,boolean selected){
   if(n<0||n>=queue.size())return;
   if(audio.requestAudioFocus(focus)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED){error="Otra aplicación está usando el audio.";return;}
@@ -66,14 +74,20 @@ public class PlayerService extends Service {
   catch(Exception e){preparing=false;error="No se puede abrir el archivo. Vuelve a importarlo.";player.release();player=null;stopForeground(STOP_FOREGROUND_REMOVE);}
  }
  public void toggle(){if(playing())pause();else resume();}
+ // Reanuda la música o elige una canción si aún no hay un reproductor.
  public void resume(){if(player==null){if(!queue.isEmpty()){if(shuffle)next();else play(Math.max(index,0));}return;}if(!preparing&&audio.requestAudioFocus(focus)==AudioManager.AUDIOFOCUS_REQUEST_GRANTED){player.start();update();}}
+ // Pausa el audio y actualiza los controles.
  public void pause(){if(player!=null&&!preparing&&player.isPlaying())player.pause();update();}
  private void playUri(String uri){if(uri!=null)for(int n=0;n<queue.size();n++)if(queue.get(n).uri.equals(uri)){playInternal(n,false);return;}}
+ // Avanza según el orden normal o el modo aleatorio.
  public void next(){if(!queue.isEmpty()){if(shuffle)playUri(shuffled.next());else playInternal((index+1)%queue.size(),false);}}
+ // Reinicia la canción si lleva más de tres segundos; en otro caso vuelve a la anterior.
  public void previous(){if(position()>3000)seek(0);else skipPrevious();}
+ // Cambia directamente a la canción anterior, incluido el historial aleatorio.
  public void skipPrevious(){if(!queue.isEmpty()){if(shuffle)playUri(shuffled.previous());else playInternal((index-1+queue.size())%queue.size(),false);}}
 
  private PendingIntent action(String a){return PendingIntent.getService(this,a.hashCode(),new Intent(this,PlayerService.class).setAction(a),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);}
+ // Sincroniza título, portada, estado y botones con Android y la notificación.
  private void update(){
   if(player==null)return;
   Track track=currentTrack();String key=track==null?"empty":track.uri+"\n"+track.cover;
@@ -89,5 +103,6 @@ public class PlayerService extends Service {
    .setStyle(new Notification.MediaStyle().setMediaSession(session.getSessionToken()).setShowActionsInCompactView(0,1,2)).setOnlyAlertOnce(true).setOngoing(playing()).build();
   startForeground(1,n);
  }
+ // Libera el reproductor, el control del audio y la sesión multimedia.
  @Override public void onDestroy(){unregisterReceiver(noisy);if(player!=null)player.release();audio.abandonAudioFocusRequest(focus);session.release();instance=null;super.onDestroy();}
 }

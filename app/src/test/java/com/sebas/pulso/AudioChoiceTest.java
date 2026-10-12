@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.schabi.newpipe.extractor.MediaFormat;
 import org.schabi.newpipe.extractor.stream.AudioStream;
 import static org.junit.Assert.*;
+/** Comprueba que se conserve la calidad aunque cambie la dirección de descarga. */
 public class AudioChoiceTest {
  private AudioStream audio(String id,String url,int rate,String track){return new AudioStream.Builder().setId(id).setContent(url,true).setMediaFormat(MediaFormat.M4A).setAverageBitrate(rate).setAudioTrackId(track).build();}
  @Test public void qualitySurvivesExpiredDownloadAddress()throws Exception{AudioStream old=audio("140","https://old",128,"original");AudioChoice c=AudioChoice.fromJson(AudioChoice.of(old).json());AudioStream fresh=audio("140","https://new",128,"original");assertSame(fresh,c.resolve(Arrays.asList(fresh)));}

@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import okhttp3.*;
 
+/** Busca versiones de Pulso en GitHub, verifica el APK y abre el instalador de Android. */
 public final class Updater {
     private static final String RELEASES = "https://api.github.com/repos/SebasMinda/Pulso/releases/latest";
     private final Activity host;
@@ -52,6 +53,7 @@ public final class Updater {
 
     public boolean automatic() { return preferences.getBoolean("automatic", true); }
     public void automatic(boolean enabled) { preferences.edit().putBoolean("automatic", enabled).apply(); }
+    // Consulta al abrir como máximo una vez al día si el aviso automático está activo.
     public void checkOnLaunch() {
         if (automatic() && System.currentTimeMillis() - preferences.getLong("lastCheck", 0) > 86400000L) check(false);
     }
@@ -66,6 +68,7 @@ public final class Updater {
                 .header("Accept", "application/vnd.github+json").build());
         return call.execute();
     }
+    // Lee los metadatos con un límite de un megabyte.
     private String readJson(Response response) throws IOException {
         if (response.body() == null) throw new IOException("Respuesta vacía.");
         try (InputStream input = response.body().byteStream(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
@@ -79,6 +82,7 @@ public final class Updater {
     }
     private void markChecked() { preferences.edit().putLong("lastCheck", System.currentTimeMillis()).apply(); }
 
+    // Consulta la última publicación estable y comprueba sus archivos y versión.
     public void check(boolean manual) {
         if (busy || closed) return;
         state(true, "Buscando una versión nueva…", "Buscando…");
@@ -122,6 +126,7 @@ public final class Updater {
         });
     }
 
+    // Muestra los cambios y solicita la descarga de la actualización.
     private void confirmDownload() {
         String changes = update.changes;
         if (changes.length() > 600) changes = changes.substring(0, 600);
@@ -131,6 +136,7 @@ public final class Updater {
                 .setNegativeButton("Ahora no", null).show();
     }
 
+    // Descarga a un archivo temporal y verifica su integridad antes de ofrecer instalarlo.
     private void download() {
         if (busy || closed) return;
         UpdateSpec spec = update;
@@ -173,6 +179,7 @@ public final class Updater {
         });
     }
 
+    // Comprueba que el APK tenga el paquete, la versión y la firma esperados.
     private void verifyApk(File apk, UpdateSpec spec) throws Exception {
         PackageManager pm = host.getPackageManager();
         int flags = Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
@@ -183,6 +190,7 @@ public final class Updater {
         if (code != spec.versionCode || !spec.newerThan(BuildConfig.VERSION_CODE)) throw new IOException("La versión del APK no coincide.");
         if (!signers(candidate).equals(signers(installed))) throw new IOException("La firma no coincide con tu Pulso.");
     }
+    // Calcula las huellas de los certificados que firmaron el APK.
     private Set<String> signers(PackageInfo info) throws Exception {
         Signature[] signatures;
         if (Build.VERSION.SDK_INT >= 28) {
@@ -195,6 +203,7 @@ public final class Updater {
         return result;
     }
 
+    // Comprueba el permiso y abre el instalador de Android con acceso al APK.
     private void install() {
         if (ready == null || !ready.isFile()) return;
         if (!host.getPackageManager().canRequestPackageInstalls()) {
@@ -209,6 +218,7 @@ public final class Updater {
             host.startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
         } catch (Exception e) { status.setText("Android no pudo abrir el instalador. Vuelve a intentarlo."); }
     }
+    // Cancela la consulta o descarga y libera sus tareas.
     public void close() {
         closed = true; if (call != null) call.cancel(); worker.shutdownNow(); ui.removeCallbacksAndMessages(null);
     }

@@ -2,6 +2,7 @@ package com.sebas.pulso;
 import org.json.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
+/** Comprueba persistencia, duplicados, reintentos y eliminación de descargas terminadas. */
 public class DownloadQueueTest {
  private DownloadQueue.Entry entry(String url,int rate){return new DownloadQueue.Entry(url,"Canción","https://image","Canal",new AudioChoice("140","m4a","",rate,"M4A"));}
  @Test public void persistsEachSongsQualityAndRestoresInterruptedItem()throws Exception{

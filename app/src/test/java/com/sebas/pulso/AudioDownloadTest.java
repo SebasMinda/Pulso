@@ -11,6 +11,7 @@ import okhttp3.OkHttpClient;
 import org.junit.*;
 import static org.junit.Assert.*;
 
+/** Simula un servidor local para probar partes, reintentos, cancelación y archivos incompletos. */
 public class AudioDownloadTest {
  private ServerSocket server;
  private ExecutorService workers;
@@ -37,7 +38,7 @@ public class AudioDownloadTest {
    BufferedReader reader=new BufferedReader(new InputStreamReader(client.getInputStream(),java.nio.charset.StandardCharsets.US_ASCII));
    String requestLine=reader.readLine();if(requestLine==null)return;String line,range=null;
    while((line=reader.readLine())!=null && !line.isEmpty()) if(line.toLowerCase(java.util.Locale.ROOT).startsWith("range:")) range=line.substring(6).trim();
-   if(line==null)return; // A cancelled socket without complete headers is not an HTTP request.
+   if(line==null)return; // No cuenta un socket cancelado antes de recibir las cabeceras HTTP completas.
    requests.incrementAndGet();
    OutputStream out=client.getOutputStream();
    if(range==null) singles.incrementAndGet();

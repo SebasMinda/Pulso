@@ -6,7 +6,7 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.util.Locale;
 
-/** Validates the update description before downloading or offering installation. */
+/** Valida los datos de una actualización y comprueba el tamaño y la huella SHA-256 del APK. */
 public final class UpdateSpec {
     public static final long MAX_BYTES = 100L * 1024 * 1024;
     public final int versionCode;
@@ -28,8 +28,10 @@ public final class UpdateSpec {
         versionCode = (int) code;
     }
 
+    // Compara el número interno de versión con el instalado.
     public boolean newerThan(long installedCode) { return versionCode > installedCode; }
 
+    // Acepta solo enlaces HTTPS de archivos en Releases del repositorio Pulso.
     public static boolean allowedAsset(String url) {
         try {
             URI uri = URI.create(url);
@@ -42,6 +44,7 @@ public final class UpdateSpec {
         } catch (RuntimeException e) { return false; }
     }
 
+    // Comprueba que el archivo tenga el tamaño y SHA-256 anunciados.
     public void verify(File file) throws Exception {
         if (file.length() != sizeBytes) throw new IOException("La descarga está incompleta.");
         MessageDigest digest = MessageDigest.getInstance("SHA-256");

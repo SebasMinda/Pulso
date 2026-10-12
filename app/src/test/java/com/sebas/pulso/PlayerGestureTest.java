@@ -2,6 +2,7 @@ package com.sebas.pulso;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static com.sebas.pulso.PlayerGesture.Action.*;
+/** Comprueba direcciones, distancia mínima y gestos diagonales en ambos reproductores. */
 public class PlayerGestureTest {
  @Test public void horizontalDirectionIsTheSameInBothPlayers(){for(boolean expanded:new boolean[]{false,true}){assertEquals(NEXT,PlayerGesture.resolve(-80,12,48,expanded));assertEquals(PREVIOUS,PlayerGesture.resolve(80,-12,48,expanded));}}
  @Test public void tapsAndSmallDragsDoNotSkip(){assertEquals(NONE,PlayerGesture.resolve(0,0,48,false));assertEquals(NONE,PlayerGesture.resolve(-48,0,48,true));assertEquals(NONE,PlayerGesture.resolve(30,20,48,false));}

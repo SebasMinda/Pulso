@@ -1,4 +1,4 @@
-"""Create the bounded metadata consumed by Pulso's updater."""
+"""Crea update.json con versión, tamaño y SHA-256 del APK para el actualizador de Pulso."""
 import hashlib
 import json
 import pathlib
@@ -9,10 +9,12 @@ properties = dict(
     line.split("=", 1) for line in (project / "version.properties").read_text().splitlines()
     if line.strip() and not line.lstrip().startswith("#")
 )
+# Uso: python tools/make_update.py ruta/Pulso.apk ruta/update.json
 apk = pathlib.Path(sys.argv[1])
 size = apk.stat().st_size
 if not 1024 <= size <= 100 * 1024 * 1024:
     raise SystemExit("APK size is invalid")
+# Describe el APK real y toma un resumen de cambios para mostrarlo en la app.
 metadata = {
     "versionCode": int(properties["versionCode"]),
     "versionName": properties["versionName"],

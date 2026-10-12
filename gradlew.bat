@@ -1,3 +1,4 @@
+@rem Inicia Gradle con la versión fijada por el proyecto en Windows.
 @rem
 @rem Copyright 2015 the original author or authors.
 @rem

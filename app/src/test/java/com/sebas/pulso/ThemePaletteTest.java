@@ -1,6 +1,7 @@
 package com.sebas.pulso;
 import org.junit.Test;
 import static org.junit.Assert.*;
+/** Comprueba colores del tema, contraste y códigos hexadecimales. */
 public class ThemePaletteTest {
  @Test public void originalKeepsExistingSurfaces(){ThemePalette p=new ThemePalette(ThemePalette.BACKGROUND,ThemePalette.BUTTON,ThemePalette.ACCENT);assertTrue(p.original());assertEquals(0xff1a1414,p.card());assertEquals(0xffbfb3a4,p.muted());}
  @Test public void hexadecimalRoundTrip(){assertEquals(0xffc9ad72,ThemePalette.parse(" #c9ad72 "));assertEquals("#00FF80",ThemePalette.hex(ThemePalette.parse("00ff80")));}

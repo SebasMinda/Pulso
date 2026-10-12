@@ -1,3 +1,4 @@
+// Define el nombre del proyecto, el módulo app y los repositorios de dependencias.
 pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
 dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral(); maven { url 'https://jitpack.io' } } }
 rootProject.name = 'Pulso'

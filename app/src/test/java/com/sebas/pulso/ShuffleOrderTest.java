@@ -2,6 +2,7 @@ package com.sebas.pulso;
 import java.util.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
+/** Comprueba vueltas sin repeticiones, historial y cambios de biblioteca. */
 public class ShuffleOrderTest {
  @Test public void cycleVisitsAllOtherSongsWithoutRepeatingCurrent(){ShuffleOrder s=new ShuffleOrder(new Random(42));s.reset(Arrays.asList("a","b","c","d"),"a");Set<String> played=new HashSet<>();for(int i=0;i<3;i++){String n=s.next();assertNotEquals("a",n);assertTrue(played.add(n));}assertEquals(new HashSet<>(Arrays.asList("b","c","d")),played);}
  @Test public void previousUsesHistoryAndNextReturnsToIt(){ShuffleOrder s=new ShuffleOrder(new Random(5));s.reset(Arrays.asList("a","b","c"),"a");String b=s.next(),c=s.next();assertEquals(b,s.previous());assertEquals("a",s.previous());assertEquals(b,s.next());assertEquals(c,s.next());}
