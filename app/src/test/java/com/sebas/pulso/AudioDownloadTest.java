@@ -31,12 +31,14 @@ public class AudioDownloadTest {
   workers.submit(()->{while(!server.isClosed()) {try {Socket socket=server.accept();workers.submit(()->serve(socket));}catch(IOException ignored){}}});
  }
  private void serve(Socket socket) {
-  requests.incrementAndGet();int running=active.incrementAndGet();max.accumulateAndGet(running,Math::max);
+  int running=active.incrementAndGet();max.accumulateAndGet(running,Math::max);
   try(Socket client=socket) {
    client.setSoTimeout(5000);
    BufferedReader reader=new BufferedReader(new InputStreamReader(client.getInputStream(),java.nio.charset.StandardCharsets.US_ASCII));
-   reader.readLine();String line,range=null;
+   String requestLine=reader.readLine();if(requestLine==null)return;String line,range=null;
    while((line=reader.readLine())!=null && !line.isEmpty()) if(line.toLowerCase(java.util.Locale.ROOT).startsWith("range:")) range=line.substring(6).trim();
+   if(line==null)return; // A cancelled socket without complete headers is not an HTTP request.
+   requests.incrementAndGet();
    OutputStream out=client.getOutputStream();
    if(range==null) singles.incrementAndGet();
    if(range!=null && !mode.equals("ignore")) {
