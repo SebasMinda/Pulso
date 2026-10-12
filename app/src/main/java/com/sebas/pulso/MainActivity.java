@@ -25,7 +25,7 @@ public class MainActivity extends Activity {
  private ThemePalette palette;
  private final Map<TextView,Integer> textRoles=new WeakHashMap<>();private final Map<View,Integer> backgroundRoles=new WeakHashMap<>();
  private final Set<View> roundedViews=Collections.newSetFromMap(new WeakHashMap<>());private final Set<Button> themedButtons=Collections.newSetFromMap(new WeakHashMap<>());private final Set<TextView> metalLabels=Collections.newSetFromMap(new WeakHashMap<>());
- private TextView themeName;private Switch automatic;
+ private TextView themeName;private Switch automatic;private BrandView brandLogo;
  private LinearLayout root, songs; private TextView now,status,time; private Button play,download; private SeekBar seek; private EditText link;
  private PlayerService player; private boolean bound, seeking; private final ArrayList<Track> tracks=new ArrayList<>();
  private Updater updater;
@@ -90,7 +90,7 @@ public class MainActivity extends Activity {
   for(Map.Entry<TextView,Integer> e:textRoles.entrySet()){TextView v=e.getKey();v.setTextColor(themeColor(e.getValue()));if(v instanceof EditText){((EditText)v).setHintTextColor(palette.muted());v.setBackgroundTintList(android.content.res.ColorStateList.valueOf(palette.accent));}}
   for(Button b:themedButtons)paintButton(b);for(TextView v:metalLabels)paintGold(v);paintSeek();paintSwitch();
   for(int i:new int[]{0,2,3}){tabs[i].setTextColor(themeColor(i==selectedTab?GOLD:MUTED));if(i==selectedTab)tabs[i].setBackground(metallicRed(true));}
-  covers.setAccent(palette.accent);refreshShuffle();themeName.setText(getPreferences(0).getBoolean("theme.custom",false)?"Tema actual: Personalizado":"Tema actual: Pulso clásico");
+  brandLogo.setAccent(palette.accent);covers.setAccent(palette.accent);refreshShuffle();themeName.setText(getPreferences(0).getBoolean("theme.custom",false)?"Tema actual: Personalizado":"Tema actual: Pulso clásico");
  }
  // Crea los controles de apariencia de Ajustes.
  private void buildAppearance(){LinearLayout appearance=section();appearance.addView(text("Apariencia",21,Color.WHITE));themeName=text(getPreferences(0).getBoolean("theme.custom",false)?"Tema actual: Personalizado":"Tema actual: Pulso clásico",13,GOLD);appearance.addView(themeName);
@@ -168,8 +168,8 @@ public class MainActivity extends Activity {
  private void build(){
   LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);background(shell,BG,false);shell.setFocusableInTouchMode(true);setContentView(shell);
   shell.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(0,insets.getSystemWindowInsetTop(),0,insets.getSystemWindowInsetBottom());return insets;});
-  LinearLayout brand=new LinearLayout(this);brand.setGravity(Gravity.CENTER_VERTICAL);brand.setPadding(dp(20),dp(8),dp(20),dp(4));shell.addView(brand);
-  TextView logo=text("pulso",28,GOLD);logo.setTypeface(null,Typeface.BOLD);goldMetal(logo);brand.addView(logo,new LinearLayout.LayoutParams(0,-2,1));brand.addView(text("TU MÚSICA",10,MUTED));
+  LinearLayout brand=new LinearLayout(this);brand.setOrientation(LinearLayout.VERTICAL);brand.setGravity(Gravity.CENTER);brand.setPadding(dp(20),dp(8),dp(20),dp(4));shell.addView(brand,new LinearLayout.LayoutParams(-1,-2));
+  brandLogo=new BrandView(this);brandLogo.setAccent(palette.accent);brand.addView(brandLogo,new LinearLayout.LayoutParams(-1,dp(48)));TextView tagline=text("TU MÚSICA",10,MUTED);tagline.setLetterSpacing(.16f);tagline.setGravity(Gravity.CENTER);brand.addView(tagline);
   FrameLayout container=new FrameLayout(this);shell.addView(container,new LinearLayout.LayoutParams(-1,0,1));
 
   page(0,container);heading("Tu biblioteca","Tus canciones, siempre contigo.");
