@@ -1,5 +1,7 @@
-# Validación Pulso 0.13.0
+# Validación Pulso 0.14.0
 
-Gestos horizontales en ambos reproductores. El gesto vertical conserva sus direcciones. Se excluye la barra de posición, se cancela el toque del control antes de navegar y se consume el gesto hasta soltar para evitar cambios repetidos. El gesto a la derecha siempre cambia a la canción anterior, con historial aleatorio.
+PULSO centrado con tipografía condensada, mayúsculas y letras espaciadas. El nombre permanece visible cuatro segundos, se transforma mediante fundido y escala en la nota musical, y vuelve al nombre en un ciclo suave de diez segundos. Usa el color de detalles del tema y muestra el texto fijo cuando Android desactiva las animaciones. La animación se cancela cuando la vista se oculta o se retira.
 
-PlayerGestureTest comprueba ambas vistas, direcciones, movimientos pequeños, diagonales, gestos verticales y umbral según densidad. Las 44 pruebas unitarias, Lint y compilaciones de desarrollo y producción pasaron en https://github.com/SebasMinda/Pulso/actions/runs/38200725439. APK firmado y certificado estable verificado. El servidor de pruebas solo cuenta solicitudes con cabeceras completas para excluir sockets cancelados. Interacción visual en un teléfono pendiente.
+Pruebas, Lint y compilación de desarrollo y producción completadas para f5465d9ae80156194257cc2f137c2ba853a95aa1: https://github.com/SebasMinda/Pulso/actions/runs/38205423000. El paso anterior de publicación falló por ausencia de los secretos de firma en GitHub; se usa la firma local estable del proyecto.
+
+APK firmado y certificado estable verificado. Pendiente comprobación visual de la transición en el teléfono.
