@@ -5,7 +5,7 @@ Reproductor de música personal en español, con biblioteca local, audio de vide
 ## Funciones
 
 - Búsqueda de canciones y artistas en YouTube normal con miniaturas, canal, duración y paginación.
-- Lista persistente de descargas, calidad por canción, botón Descargar todo y reintento de fallidas.
+- Lista persistente de descargas, calidad por canción, botón Descargar todo y reintento de fallidas. Cada resultado también permite descargar solo esa canción con elección de calidad.
 - Agregar enlaces individuales o pegar varios enlaces, uno por línea.
 
 - Reproducción de MP3, M4A, FLAC, WAV y WebM/Opus.
@@ -33,7 +33,7 @@ Pulso 0.1 usaba una firma de prueba cuya clave no se conservó. La distribución
 
 1. Pulsa **+ Importar** y selecciona tus canciones.
 2. En Biblioteca, toca una canción para escucharla. Desliza la barrita inferior hacia arriba para abrir el reproductor y hacia abajo para reducirlo. Puedes activar Aleatorio dentro del reproductor. Concede el permiso de notificaciones si quieres los controles fuera de la app.
-3. En Descargas, busca una canción o artista y pulsa **Agregar y elegir calidad** en el video elegido. También puedes pegar un enlace, compartir desde YouTube o usar **Pegar varios enlaces**.
+3. En Descargas, busca una canción o artista y pulsa **Seleccionar** en el video elegido. Escoge **Agregar al listado** o **Descargar solo esta** y luego la calidad. Abre **Tu lista** para ver tus pendientes. Abre **Por enlace** para pegar un enlace o usar **Pegar varios enlaces**. También puedes compartir un enlace desde YouTube.
 4. Revisa tu lista y cambia **Calidad** en cada canción si quieres. Pulsa **Descargar todo** y mantén Pulso abierta. **Detener descargas** conserva lo terminado y permite reiniciar lo pendiente. Las fallidas quedan en la lista para reintentar. Las descargadas se quitan automáticamente de la lista y aparecen en la biblioteca.
 5. Con **⋮ → Guardar una copia…** puedes copiar una descarga a una carpeta del teléfono.
 6. En **Ajustes → Actualizaciones**, pulsa **Buscar actualizaciones**. Si hay una versión nueva, acepta su descarga y confirma la instalación. **Avisar al abrir Pulso** consulta como máximo una vez al día mientras abres la app.

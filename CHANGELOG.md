@@ -1,3 +1,11 @@
+Pulso 0.12.0
+
+- Buscador de YouTube como vista principal de Descargas, con resultados debajo.
+- Enlaces y listado se abren cuando se necesitan.
+- Cada resultado permite añadir al listado o descargar solo esa canción, con elección de calidad.
+- La descarga individual conserva las canciones pendientes del listado.
+- Más espacio entre los botones de Apariencia y de enlaces.
+
 Pulso 0.11.0
 
 - Apariencia en Ajustes: Pulso clásico y tema personalizado guardado.

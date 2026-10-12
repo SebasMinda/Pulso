@@ -1,9 +1,5 @@
-# Validación Pulso 0.11.0
+# Validación Pulso 0.12.0
 
-Cambio de tema en vivo sin reconstruir la pantalla, reiniciar el servicio ni cancelar descargas. Preferencias independientes para recuperar el tema personalizado después de escoger el clásico. Textos adaptados al fondo y botones.
+Buscador como vista principal, paneles de enlaces y lista plegados, selección entre listado y descarga individual. La descarga directa usa una sola entrada independiente y no actualiza, elimina ni inicia las pendientes del listado. Controles de cancelación y progreso compartidos. Separación vertical de 10 dp entre los botones de Apariencia y enlaces.
 
-Pruebas unitarias, Lint y compilación de desarrollo y producción completados en GitHub Actions para el commit fba2d22112bf72b54faf2b69e66e70e7c974a0e5. Ejecución: https://github.com/SebasMinda/Pulso/actions/runs/38121747122.
-
-APK de producción firmado con la clave estable. Verificados la firma, el certificado habitual, la identidad com.sebas.pulso.app y la versión 0.11.0 con código 12.
-
-Pendiente validación visual final en un teléfono.
+Pendientes pruebas unitarias, Lint, compilación y firma. Validación visual e interacción real en un teléfono pendientes.
