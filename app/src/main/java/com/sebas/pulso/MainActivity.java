@@ -169,7 +169,7 @@ public class MainActivity extends Activity {
   LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);background(shell,BG,false);shell.setFocusableInTouchMode(true);setContentView(shell);
   shell.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(0,insets.getSystemWindowInsetTop(),0,insets.getSystemWindowInsetBottom());return insets;});
   LinearLayout brand=new LinearLayout(this);brand.setOrientation(LinearLayout.VERTICAL);brand.setGravity(Gravity.CENTER);brand.setPadding(dp(20),dp(8),dp(20),dp(4));shell.addView(brand,new LinearLayout.LayoutParams(-1,-2));
-  brandLogo=new BrandView(this);brandLogo.setAccent(palette.accent);brand.addView(brandLogo,new LinearLayout.LayoutParams(-1,dp(48)));TextView tagline=text("TU MÚSICA",10,MUTED);tagline.setLetterSpacing(.16f);tagline.setGravity(Gravity.CENTER);brand.addView(tagline);
+  brandLogo=new BrandView(this);brandLogo.setAccent(palette.accent);brand.addView(brandLogo,new LinearLayout.LayoutParams(-1,dp(38)));
   FrameLayout container=new FrameLayout(this);shell.addView(container,new LinearLayout.LayoutParams(-1,0,1));
 
   page(0,container);heading("Tu biblioteca","Tus canciones, siempre contigo.");

@@ -1,3 +1,9 @@
+Pulso 0.15.0
+
+- Cabecera más pequeña y sin el texto TU MÚSICA.
+- Las letras de PULSO se reúnen en una esfera brillante que toma forma de disco musical y luego vuelve al nombre.
+- El efecto conserva el color de detalles del tema y respeta las animaciones desactivadas en Android.
+
 Pulso 0.14.1
 
 - Corrige la portada pixelada al abrir el reproductor después de cargar una canción con la vista contraída.

@@ -1,5 +1,5 @@
-# Validación Pulso 0.14.1
+# Validación Pulso 0.15.0
 
-La carga de portadas ya no toma el ancho de LayoutParams para generar miniaturas. Ese ancho puede ser cero antes de medir el reproductor, lo que reducía la portada a 64 píxeles y la estiraba al expandirlo. Todas las vistas reciben el mismo bitmap decodificado y ImageView lo dibuja a su tamaño. Se conserva el límite de decodificación, la caché de 8 MiB y las copias locales.
+Cabecera reducida de 48 dp más subtítulo a 38 dp sin subtítulo. Nombre en mayúsculas con tipografía condensada de hasta 24 sp. Dibujo nativo: letras que se desplazan y giran hacia una esfera, sombreado radial, transición a disco con surcos y regreso al nombre. El ciclo de diez segundos conserva un intervalo de texto fijo. Se detiene al ocultarse la vista y muestra PULSO fijo cuando el sistema desactiva las animaciones.
 
-Revisión del flujo de carga inicial, reutilización de caché y carga asíncrona: ambas rutas asignan directamente la portada sin reducción por vista. Pruebas unitarias, Lint y compilaciones de desarrollo y producción completadas en https://github.com/SebasMinda/Pulso/actions/runs/38285755748. APK firmado y certificado estable verificado. Comprobación visual final en un teléfono pendiente.
+Pendientes pruebas, Lint, compilación y firma. Comprobación visual de la animación en un teléfono pendiente.
