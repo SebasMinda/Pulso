@@ -1,7 +1,5 @@
-# Validación Pulso 0.12.1
+# Validación Pulso 0.13.0
 
-Las canciones nuevas usan la primera opción de AudioChoice.available, ordenada por tasa de audio de mayor a menor. Se aplica tanto al listado como a la descarga individual y a los enlaces. El diálogo manual aparece solamente al editar Calidad en una entrada del listado. La descarga individual conserva el listado.
+Gestos horizontales en ambos reproductores. El gesto vertical conserva sus direcciones. Se excluye la barra de posición, se cancela el toque del control antes de navegar y se consume el gesto hasta soltar para evitar cambios repetidos. El gesto a la derecha siempre cambia a la canción anterior, con historial aleatorio.
 
-Pruebas unitarias, Lint y compilaciones de desarrollo y producción completadas. Ejecución: https://github.com/SebasMinda/Pulso/actions/runs/38198624233. La prueba AudioChoiceTest.displaysHighestBitrateFirstWithoutDuplicateFormats confirma el orden usado por la selección automática.
-
-APK firmado con la clave estable y certificado verificado. Validación visual y descarga real en un teléfono pendientes.
+PlayerGestureTest comprueba ambas vistas, direcciones, movimientos pequeños, diagonales, gestos verticales y umbral según densidad. Pendientes pruebas, Lint, compilación y firma. Interacción visual en un teléfono pendiente.

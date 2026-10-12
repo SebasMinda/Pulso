@@ -70,7 +70,8 @@ public class PlayerService extends Service {
  public void pause(){if(player!=null&&!preparing&&player.isPlaying())player.pause();update();}
  private void playUri(String uri){if(uri!=null)for(int n=0;n<queue.size();n++)if(queue.get(n).uri.equals(uri)){playInternal(n,false);return;}}
  public void next(){if(!queue.isEmpty()){if(shuffle)playUri(shuffled.next());else playInternal((index+1)%queue.size(),false);}}
- public void previous(){if(position()>3000)seek(0);else if(!queue.isEmpty()){if(shuffle)playUri(shuffled.previous());else playInternal((index-1+queue.size())%queue.size(),false);}}
+ public void previous(){if(position()>3000)seek(0);else skipPrevious();}
+ public void skipPrevious(){if(!queue.isEmpty()){if(shuffle)playUri(shuffled.previous());else playInternal((index-1+queue.size())%queue.size(),false);}}
 
  private PendingIntent action(String a){return PendingIntent.getService(this,a.hashCode(),new Intent(this,PlayerService.class).setAction(a),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);}
  private void update(){

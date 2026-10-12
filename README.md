@@ -9,7 +9,7 @@ Reproductor de música personal en español, con biblioteca local, audio de vide
 - Agregar enlaces individuales o pegar varios enlaces, uno por línea.
 
 - Reproducción de MP3, M4A, FLAC, WAV y WebM/Opus.
-- Pestañas Biblioteca, Descargas y Ajustes. Reproductor expandible desde la barra inferior mediante gesto o toque.
+- Pestañas Biblioteca, Descargas y Ajustes. Reproductor expandible desde la barra inferior mediante gesto o toque. Desliza a la izquierda o a la derecha para cambiar de canción en ambos tamaños.
 - Modo aleatorio guardado, sin repetir canciones dentro de cada vuelta y con historial para Anterior.
 - Portadas de los nuevos videos descargados, portadas incrustadas de archivos importados y elección manual de una imagen.
 - Portadas guardadas en el teléfono para escucharlas sin internet.

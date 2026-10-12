@@ -1,3 +1,11 @@
+Pulso 0.13.0
+
+- Deslizar a la izquierda cambia a la siguiente canción y a la derecha a la anterior, en el reproductor expandido y la barra inferior.
+- El gesto a la derecha cambia a la canción anterior incluso después de los primeros segundos.
+- Conserva el gesto vertical para expandir y contraer y el historial del modo aleatorio.
+- La barra de posición sigue permitiendo adelantar y retroceder sin cambiar de canción.
+- Un solo cambio por gesto. Los movimientos cortos, diagonales y con varios dedos no activan cambios.
+
 Pulso 0.12.1
 
 - Los resultados y enlaces individuales usan automáticamente la mayor tasa de audio disponible, igual que al pegar varios enlaces.

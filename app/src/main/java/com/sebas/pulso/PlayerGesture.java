@@ -1,0 +1,13 @@
+package com.sebas.pulso;
+
+/** Resolve one dominant swipe axis, leaving short and diagonal movements alone. */
+public final class PlayerGesture {
+ public enum Action { NONE, NEXT, PREVIOUS, EXPAND, COLLAPSE }
+ private PlayerGesture(){}
+ public static Action resolve(float dx,float dy,float threshold,boolean expanded){
+  float x=Math.abs(dx),y=Math.abs(dy);
+  if(x>threshold&&x>y*1.5f)return dx<0?Action.NEXT:Action.PREVIOUS;
+  if(y>threshold&&y>x*1.5f){if(expanded&&dy>0)return Action.COLLAPSE;if(!expanded&&dy<0)return Action.EXPAND;}
+  return Action.NONE;
+ }
+}
