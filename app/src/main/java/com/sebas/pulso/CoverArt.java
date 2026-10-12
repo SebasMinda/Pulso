@@ -59,14 +59,8 @@ public final class CoverArt {
   if(t==null)return null;
   try {File f=file(c,t);if(f.isFile()&&f.length()<=LIMIT)return decode(read(new FileInputStream(f)));}catch(Exception ignored){}return null;
  }
- // Ajusta la portada al tamaño de la vista y reutiliza versiones reducidas.
- private Bitmap fit(ImageView view,String id,Bitmap original){
-  int target=Math.min(640,Math.max(64,view.getLayoutParams().width));
-  if(Math.max(original.getWidth(),original.getHeight())<=target)return original;
-  String scaledKey=id+"@"+target;Bitmap scaled=memory.get(scaledKey);if(scaled!=null)return scaled;
-  double scale=(double)target/Math.max(original.getWidth(),original.getHeight());
-  scaled=Bitmap.createScaledBitmap(original,Math.max(1,(int)(original.getWidth()*scale)),Math.max(1,(int)(original.getHeight()*scale)),true);memory.put(scaledKey,scaled);return scaled;
- }
+ // Todas las vistas comparten la portada decodificada. ImageView ajusta su dibujo
+ // sin crear miniaturas que después puedan estirarse al expandir el reproductor.
  // Busca la copia local; si falta, lee la imagen elegida o incrustada y la guarda.
  private Bitmap load(Track t) {
   Bitmap cached=cached(context,t);if(cached!=null)return cached;
@@ -101,9 +95,9 @@ public final class CoverArt {
   if(closed)return;
   String id=track==null?"":key(track);view.setTag(id);view.setImageResource(R.drawable.cover_placeholder);placeholders.put(view,true);tintPlaceholder(view);
   if(track==null)return;view.setContentDescription("Portada de "+track.title);
-  Bitmap bitmap=memory.get(id);if(bitmap!=null){showBitmap(view,fit(view,id,bitmap));return;}
+  Bitmap bitmap=memory.get(id);if(bitmap!=null){showBitmap(view,bitmap);return;}
   if(missing.contains(id))return;
-  Runnable apply=()->{if(!closed&&id.equals(view.getTag())){Bitmap b=memory.get(id);if(b!=null){showBitmap(view,fit(view,id,b));if(loaded!=null)loaded.run();}}};
+  Runnable apply=()->{if(!closed&&id.equals(view.getTag())){Bitmap b=memory.get(id);if(b!=null){showBitmap(view,b);if(loaded!=null)loaded.run();}}};
   List<Runnable> waiters=pending.get(id);if(waiters!=null){waiters.add(apply);return;}
   waiters=new ArrayList<>();waiters.add(apply);pending.put(id,waiters);
   // Conserva la portada elegida al iniciar la carga aunque el usuario cambie después la imagen.

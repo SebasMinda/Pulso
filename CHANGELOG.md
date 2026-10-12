@@ -1,3 +1,9 @@
+Pulso 0.14.1
+
+- Corrige la portada pixelada al abrir el reproductor después de cargar una canción con la vista contraída.
+- Biblioteca, barra inferior y reproductor comparten la portada conservada en memoria, sin reducirla a una miniatura de 64 píxeles.
+- Conserva la copia local de las portadas y el límite de memoria.
+
 Pulso 0.14.0
 
 - Marca PULSO centrada, en mayúsculas, con tipografía condensada y letras espaciadas.

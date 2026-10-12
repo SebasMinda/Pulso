@@ -1,7 +1,5 @@
-# Validación Pulso 0.14.0
+# Validación Pulso 0.14.1
 
-PULSO centrado con tipografía condensada, mayúsculas y letras espaciadas. El nombre permanece visible cuatro segundos, se transforma mediante fundido y escala en la nota musical, y vuelve al nombre en un ciclo suave de diez segundos. Usa el color de detalles del tema y muestra el texto fijo cuando Android desactiva las animaciones. La animación se cancela cuando la vista se oculta o se retira.
+La carga de portadas ya no toma el ancho de LayoutParams para generar miniaturas. Ese ancho puede ser cero antes de medir el reproductor, lo que reducía la portada a 64 píxeles y la estiraba al expandirlo. Todas las vistas reciben el mismo bitmap decodificado y ImageView lo dibuja a su tamaño. Se conserva el límite de decodificación, la caché de 8 MiB y las copias locales.
 
-Pruebas, Lint y compilación de desarrollo y producción completadas para f5465d9ae80156194257cc2f137c2ba853a95aa1: https://github.com/SebasMinda/Pulso/actions/runs/38205423000. El paso anterior de publicación falló por ausencia de los secretos de firma en GitHub; se usa la firma local estable del proyecto.
-
-APK firmado y certificado estable verificado. Pendiente comprobación visual de la transición en el teléfono.
+Revisión del flujo de carga inicial, reutilización de caché y carga asíncrona: ambas rutas asignan directamente la portada sin reducción por vista. Pendientes pruebas, Lint, compilación y firma. Comprobación visual final en un teléfono pendiente.
