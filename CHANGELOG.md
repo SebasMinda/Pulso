@@ -1,3 +1,9 @@
+Pulso 0.12.1
+
+- Los resultados y enlaces individuales usan automáticamente la mayor tasa de audio disponible, igual que al pegar varios enlaces.
+- Añadir al listado y descargar una sola canción ya no abren el selector de calidad.
+- La elección manual de calidad queda disponible en el listado.
+
 Pulso 0.12.0
 
 - Buscador de YouTube como vista principal de Descargas, con resultados debajo.
