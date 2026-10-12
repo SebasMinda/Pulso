@@ -1,3 +1,10 @@
+Pulso 0.16.0
+
+- Barra de avance con una onda suave en la parte reproducida y línea recta en la parte restante.
+- La onda se mueve mientras suena la canción y queda quieta al pausar.
+- Conserva el control circular, el arrastre para cambiar de posición y los colores del tema.
+- Detiene la animación al ocultar el reproductor y respeta las animaciones desactivadas en Android.
+
 Pulso 0.15.0
 
 - Cabecera más pequeña y sin el texto TU MÚSICA.

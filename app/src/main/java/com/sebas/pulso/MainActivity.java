@@ -26,7 +26,7 @@ public class MainActivity extends Activity {
  private final Map<TextView,Integer> textRoles=new WeakHashMap<>();private final Map<View,Integer> backgroundRoles=new WeakHashMap<>();
  private final Set<View> roundedViews=Collections.newSetFromMap(new WeakHashMap<>());private final Set<Button> themedButtons=Collections.newSetFromMap(new WeakHashMap<>());private final Set<TextView> metalLabels=Collections.newSetFromMap(new WeakHashMap<>());
  private TextView themeName;private Switch automatic;private BrandView brandLogo;
- private LinearLayout root, songs; private TextView now,status,time; private Button play,download; private SeekBar seek; private EditText link;
+ private LinearLayout root, songs; private TextView now,status,time; private Button play,download; private WaveSeekBar seek; private EditText link;
  private PlayerService player; private boolean bound, seeking; private final ArrayList<Track> tracks=new ArrayList<>();
  private Updater updater;
  private CoverArt covers;
@@ -81,7 +81,7 @@ public class MainActivity extends Activity {
  private void loadTheme(){boolean custom=getPreferences(0).getBoolean("theme.custom",false);palette=custom?new ThemePalette(getPreferences(0).getInt("theme.background",BG),getPreferences(0).getInt("theme.button",RED),getPreferences(0).getInt("theme.accent",GOLD)):new ThemePalette(BG,RED,GOLD);}
  // Guarda la elección y actualiza los colores de la pantalla.
  private void saveTheme(ThemePalette colors,boolean custom){palette=colors;android.content.SharedPreferences.Editor e=getPreferences(0).edit().putBoolean("theme.custom",custom);if(custom)e.putInt("theme.background",colors.background).putInt("theme.button",colors.button).putInt("theme.accent",colors.accent);e.apply();applyTheme();}
- private void paintSeek(){seek.setProgressTintList(android.content.res.ColorStateList.valueOf(palette.accent));seek.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(palette.muted()));GradientDrawable thumb=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{ThemePalette.mix(palette.accent,Color.WHITE,.30f),palette.accent,ThemePalette.mix(palette.accent,Color.BLACK,.30f)});thumb.setShape(GradientDrawable.OVAL);thumb.setSize(dp(20),dp(20));thumb.setStroke(dp(1),ThemePalette.mix(palette.accent,Color.BLACK,.30f));seek.setThumb(thumb);}
+ private void paintSeek(){seek.setWaveColors(palette.accent,palette.muted());seek.setProgressTintList(android.content.res.ColorStateList.valueOf(palette.accent));seek.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(palette.muted()));GradientDrawable thumb=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{ThemePalette.mix(palette.accent,Color.WHITE,.30f),palette.accent,ThemePalette.mix(palette.accent,Color.BLACK,.30f)});thumb.setShape(GradientDrawable.OVAL);thumb.setSize(dp(20),dp(20));thumb.setStroke(dp(1),ThemePalette.mix(palette.accent,Color.BLACK,.30f));seek.setThumb(thumb);}
  private void paintSwitch(){automatic.setTextColor(themeColor(MUTED));automatic.setThumbTintList(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_checked},new int[]{}},new int[]{palette.accent,palette.muted()}));automatic.setTrackTintList(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_checked},new int[]{}},new int[]{palette.button,palette.card()}));}
  // Repinta las vistas existentes para aplicar el tema durante la reproducción.
  private void applyTheme(){
@@ -184,7 +184,7 @@ public class MainActivity extends Activity {
   playerCover=cover(0);artSpace.addView(playerCover,new FrameLayout.LayoutParams(0,0,Gravity.CENTER));
   artSpace.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{int size=Math.max(0,Math.min(dp(300),Math.min(r-l,b-t)));FrameLayout.LayoutParams lp=(FrameLayout.LayoutParams)playerCover.getLayoutParams();if(lp.width!=size||lp.height!=size){lp.width=size;lp.height=size;playerCover.setLayoutParams(lp);}});
   now=text("Elige una canción",21,Color.WHITE);now.setTypeface(null,Typeface.BOLD);now.setMaxLines(2);now.setEllipsize(android.text.TextUtils.TruncateAt.END);box.addView(now);artist=text("Tu biblioteca",14,MUTED);artist.setMaxLines(1);artist.setEllipsize(android.text.TextUtils.TruncateAt.END);box.addView(artist);
-  seek=new SeekBar(this);paintSeek();box.addView(seek,new LinearLayout.LayoutParams(-1,dp(40)));time=text("0:00 / 0:00",12,MUTED);box.addView(time);
+  seek=new WaveSeekBar(this);paintSeek();box.addView(seek,new LinearLayout.LayoutParams(-1,dp(40)));time=text("0:00 / 0:00",12,MUTED);box.addView(time);
   seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar s,int p,boolean user){}public void onStartTrackingTouch(SeekBar s){seeking=true;}public void onStopTrackingTouch(SeekBar s){if(player!=null)player.seek(s.getProgress());seeking=false;}});
   LinearLayout controls=new LinearLayout(this);controls.setGravity(Gravity.CENTER);box.addView(controls);
   Button prev=button("◀",()->{if(player!=null)player.previous();});play=button("Reproducir",this::togglePlayback);Button next=button("▶",()->{if(player!=null)player.next();});prev.setContentDescription("Canción anterior");next.setContentDescription("Canción siguiente");
@@ -389,7 +389,7 @@ public class MainActivity extends Activity {
  private final Runnable tick=new Runnable(){public void run(){if(player!=null){refreshShuffle();updateAnimatedText(now,player.title());updateAnimatedText(miniTitle,player.title());updateAnimatedText(play,player.playing()?"Pausar":"Reproducir");updateAnimatedText(miniPlay,player.playing()?"Ⅱ":"▶");
    Track current=player.currentTrack();String id=current==null?"empty":current.uri+"\n"+current.cover;
    if(!id.equals(shownCover)){shownCover=id;updateAnimatedText(artist,current==null||current.artist.isEmpty()?"Tu biblioteca":current.artist);reveal(playerCover,0,0);reveal(miniCover,0,0);covers.bind(playerCover,current,()->{reveal(playerCover,0,0);if(player!=null)player.refreshArtwork();});covers.bind(miniCover,current,()->reveal(miniCover,0,0));}
-if(!seeking){seek.setMax(Math.max(player.duration(),1));seek.setProgress(player.position());}time.setText(clock(player.position())+" / "+clock(player.duration()));if(!player.error.isEmpty()){toast(player.error);player.error="";}}handler.postDelayed(this,500);}};
+seek.setPlaying(player.playing());if(!seeking){seek.setMax(Math.max(player.duration(),1));seek.setProgress(player.position());}time.setText(clock(player.position())+" / "+clock(player.duration()));if(!player.error.isEmpty()){toast(player.error);player.error="";}}handler.postDelayed(this,500);}};
  // Guarda la pestaña y libera conexiones, tareas y recursos de la pantalla.
  @Override public void onDestroy(){getPreferences(0).edit().putInt("tab",selectedTab).apply();if(covers!=null)covers.close();if(updater!=null)updater.close();handler.removeCallbacksAndMessages(null);cancelled=true;AudioDownload d=audioDownload;if(d!=null)d.cancel();jobs.shutdownNow();lookups.shutdownNow();if(bound)unbindService(connection);super.onDestroy();}
 }
