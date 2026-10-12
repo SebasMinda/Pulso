@@ -21,6 +21,7 @@ Reproductor de música personal en español, con biblioteca local, audio de vide
 - Progreso con cantidad descargada y velocidad promedio.
 - Exportación de descargas a una carpeta elegida por el usuario.
 - Aviso de actualizaciones y descarga del APK firmado desde **SebasMinda/Pulso**.
+- Apariencia en Ajustes con el tema Pulso clásico y colores personalizados para fondo, botones y detalles. La elección se guarda y se aplica sin detener la música.
 
 ## Instalar
 
@@ -36,6 +37,7 @@ Pulso 0.1 usaba una firma de prueba cuya clave no se conservó. La distribución
 4. Revisa tu lista y cambia **Calidad** en cada canción si quieres. Pulsa **Descargar todo** y mantén Pulso abierta. **Detener descargas** conserva lo terminado y permite reiniciar lo pendiente. Las fallidas quedan en la lista para reintentar. Las descargadas se quitan automáticamente de la lista y aparecen en la biblioteca.
 5. Con **⋮ → Guardar una copia…** puedes copiar una descarga a una carpeta del teléfono.
 6. En **Ajustes → Actualizaciones**, pulsa **Buscar actualizaciones**. Si hay una versión nueva, acepta su descarga y confirma la instalación. **Avisar al abrir Pulso** consulta como máximo una vez al día mientras abres la app.
+7. En **Ajustes → Apariencia**, escoge **Pulso clásico** para recuperar el tema predeterminado o **Personalizado** para volver a tus colores guardados. Cambia el fondo, los botones y los detalles con los controles de color o un código hexadecimal y pulsa **Guardar**.
 
 ## Calidad y límites
 
