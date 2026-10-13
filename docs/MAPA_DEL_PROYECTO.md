@@ -1,130 +1,149 @@
-# Mapa de archivos de Pulso
+# Guía para leer el código de Pulso
 
-Pulso es un reproductor de música para Android. Esta guía explica el propósito de los archivos del repositorio; el código propio lleva comentarios en español en las clases y operaciones principales.
+Pulso usa Java para construir las pantallas y Android para reproducir música. Esta guía indica qué leer primero y dónde cambiar cada función. El código de la aplicación está en `app/src/main/java/com/sebas/pulso/` y las pruebas están en `app/src/test/java/com/sebas/pulso/`.
 
-## Por dónde empezar
+## Un recorrido sencillo
 
-1. `Track.java`: los datos de una canción.
-2. `MainActivity.java`: las pantallas y las acciones del usuario.
-3. `PlayerService.java`: cómo se reproduce la música.
-4. `DownloadQueue.java`, `AudioChoice.java` y `AudioDownload.java`: cómo se prepara y descarga el audio.
-5. `CoverArt.java`: cómo se obtienen y guardan las portadas.
-6. `Updater.java` y `UpdateSpec.java`: cómo se comprueban e instalan actualizaciones.
+1. Empieza por `Track.java`. Representa una canción y sus cuatro datos: título, ubicación del audio, portada y artista.
+2. Lee `MainActivity.onCreate` y `MainActivity.build`. Son la entrada a la aplicación y el orden de creación de las pantallas.
+3. Abre `PlayerService.java`. Controla la reproducción y sigue funcionando cuando la actividad deja de estar delante.
+4. Sigue el recorrido de una descarga: `prepareVideo`, `useAudioQuality`, `startDownloads`, `runDownloadBatch`, `TrackDownloader.download` y `AudioDownload.download`.
+5. Mira `LibraryStore.java` para entender cómo se conservan biblioteca y pendientes al cerrar la app.
 
-## Cómo se conectan las partes
+Los nombres de clases y métodos están en inglés, como es habitual en Java. Los comentarios explican su propósito en español. No hace falta leer todo de una vez: busca primero la función que quieres entender y luego sus llamadas.
 
-Al abrir la app, `MainActivity` recupera la biblioteca y conecta `PlayerService`. Cuando eliges una canción, el servicio abre su archivo y controla la reproducción. La actividad consulta al servicio cada medio segundo para actualizar la pantalla.
+## Responsabilidad de cada clase
 
-Al buscar un video, NewPipe obtiene sus datos usando `Net`. `AudioChoice` identifica la calidad y `DownloadQueue` guarda los pendientes. Al descargar, se consulta una dirección nueva para la misma calidad y `AudioDownload` copia el audio a un archivo temporal. Si termina correctamente, la actividad lo añade como `Track` a la biblioteca y lo quita de pendientes.
-
-`CoverArt` obtiene una imagen elegida, una miniatura del video o una portada incrustada. Guarda una copia en el teléfono y la reutiliza. `ThemePalette` calcula los colores y `PlayerGesture` decide qué acción corresponde a un deslizamiento.
-
-## Código de la aplicación
-
-Ruta: `app/src/main/java/com/sebas/pulso/`.
-
-| Archivo | Qué hace |
+| Archivo | Responsabilidad |
 | --- | --- |
-| `MainActivity.java` | Construye la interfaz en Java: biblioteca, reproductor, descargas y ajustes. Gestiona importación, exportación, búsqueda y guardado de datos. |
-| `PlayerService.java` | Usa `MediaPlayer` para reproducir en segundo plano. Gestiona la sesión multimedia, el audio, la cola y los controles de la notificación. Pausa al desconectar auriculares. |
-| `Track.java` | Contiene título, URI del audio, portada y artista. Convierte esos datos a JSON y los recupera. Una URI indica dónde leer el archivo. |
-| `CoverArt.java` | Carga portadas fuera del hilo de la pantalla. Reduce imágenes grandes y reutiliza copias en memoria y almacenamiento local. |
-| `DownloadQueue.java` | Mantiene hasta 100 descargas con calidad, estado y error. Recupera pendientes al volver a abrir Pulso. |
-| `AudioChoice.java` | Identifica formato, pista de audio y bitrate. Conserva la calidad elegida aunque caduque la dirección de descarga. |
-| `AudioDownload.java` | Copia audio M4A o WebM sin convertirlo. Intenta hasta tres conexiones, reintenta partes y puede usar una sola conexión. Elimina archivos incompletos si falla. |
-| `Net.java` | Conecta NewPipe con OkHttp, la biblioteca que realiza peticiones de red. |
-| `ShuffleOrder.java` | Genera vueltas aleatorias sin repetir canciones y guarda historial para volver a la anterior. |
-| `PlayerGesture.java` | Interpreta deslizamientos: izquierda/siguiente, derecha/anterior, arriba/expandir y abajo/reducir cuando corresponde. |
-| `ThemePalette.java` | Define fondo, botones y detalles. Calcula tonos derivados y el color del texto según el fondo. |
-| `Updater.java` | Consulta la publicación estable más reciente de GitHub, descarga el APK, comprueba su firma y abre el instalador. |
-| `UpdateSpec.java` | Valida los metadatos de actualización, origen del enlace, versión, tamaño y SHA-256. SHA-256 es una huella que permite detectar cambios en el archivo. |
+| `MainActivity.java` | Coordina las acciones del usuario, construye las pantallas y actualiza sus controles. |
+| `PlayerService.java` | Reproduce con MediaPlayer, gestiona el foco de audio y muestra los controles multimedia de Android. |
+| `Track.java` | Datos de una canción y conversión a JSON. |
+| `LibraryStore.java` | Lee y guarda biblioteca y pendientes usando las mismas preferencias de las versiones anteriores. |
+| `DownloadQueue.java` | Mantiene entradas pendientes, calidad, estado y error. Entrega copias para que el hilo de descarga trabaje sin modificar el listado directamente. |
+| `TrackDownloader.java` | Resuelve la dirección temporal del audio, prepara el archivo y devuelve una canción completa. No cambia las vistas ni el listado. |
+| `AudioDownload.java` | Copia los bytes del audio por partes o con una conexión. Reintenta, verifica rangos y elimina archivos incompletos. |
+| `AudioChoice.java` | Identifica la calidad y la pista de audio. Ordena por tasa de audio y conserva la elección cuando cambia la dirección de descarga. |
+| `Net.java` | Adapta las peticiones de NewPipe a OkHttp. |
+| `CoverArt.java` | Carga portadas en segundo plano, guarda copias locales y comparte la imagen en memoria entre las vistas. |
+| `ShuffleOrder.java` | Orden aleatorio sin repetir canciones en una vuelta e historial para volver atrás. |
+| `PlayerGesture.java` | Decide si un movimiento corresponde a siguiente, anterior, expandir o contraer. |
+| `ThemePalette.java` | Colores del tema, mezcla de tonos y contraste del texto. |
+| `ColorPickerDialog.java` | Vista previa, controles RGB y entrada hexadecimal. Devuelve el color confirmado; la actividad guarda el tema. |
+| `BrandView.java` | Dibuja PULSO, la esfera y el disco. Cada dibujo tiene su propio método. |
+| `WaveSeekBar.java` | Dibuja la línea restante y la onda decorativa de progreso. Android mantiene el arrastre y la accesibilidad. |
+| `Updater.java` | Busca una actualización, descarga el APK, verifica identidad y firma y abre el instalador. |
+| `UpdateSpec.java` | Comprueba los metadatos de actualización y la integridad del archivo mediante tamaño y SHA-256. |
 
-La lista de reproducción de `PlayerService` y la lista de descargas de `DownloadQueue` tienen propósitos distintos: una determina qué escuchar y la otra qué archivos descargar.
+La cola de reproducción del servicio indica qué escuchar. `DownloadQueue` indica qué archivos descargar. Son listas distintas.
 
-## Android y recursos visuales
+## Cómo leer MainActivity
 
-| Archivo | Qué hace |
+### Creación de la pantalla
+
+`build` llama en orden a `buildShell`, `buildBrandHeader`, `buildPageContainer`, `buildLibraryPage`, `buildExpandedPlayerPage`, `buildDownloads`, `buildSettingsPage`, `buildMiniPlayer` y `buildNavigation`.
+
+Las constantes `PAGE_LIBRARY`, `PAGE_PLAYER`, `PAGE_DOWNLOADS` y `PAGE_SETTINGS` sustituyen índices dispersos. El reproductor grande se superpone a la página elegida; no tiene una pestaña inferior propia.
+
+`page` crea una página desplazable y cambia la referencia `root` al contenedor de esa página. Por eso cada constructor debe crear su página antes de añadir secciones con `section`. Esta referencia es solo para construir la interfaz, no representa la actividad completa.
+
+### Descargas
+
+`buildDownloads` separa buscador, progreso, resultados, enlaces y pendientes en cinco métodos de construcción.
+
+Al seleccionar un resultado, `prepareVideo` consulta sus formatos. `useAudioQuality` utiliza automáticamente la mayor tasa disponible para canciones nuevas. Al editar una entrada del listado se abre el selector manual.
+
+`startDownloads` prepara controles y cancelación. `runDownloadBatch` recorre las entradas y pide a `TrackDownloader` una canción completa. Los métodos `showDownloadStarted`, `showDownloadProgress`, `addDownloadedTrack`, `showDownloadFailed` y `finishDownloads` muestran cada etapa.
+
+El parámetro `queued` indica si la operación pertenece al listado. Cuando es falso, se descarga una sola canción y las entradas pendientes se conservan.
+
+### Actualización del reproductor
+
+`tick` se ejecuta cada `PLAYER_REFRESH_MS`, actualmente 500 milisegundos. Llama a `refreshPlaybackUi`, que separa textos, portadas y posición en sus propios métodos. Mientras `seeking` sea verdadero, el usuario está arrastrando la barra y la actividad no sobrescribe su posición.
+
+`shownCover` evita volver a cargar la misma portada en cada actualización.
+
+## Hilos y cancelación
+
+El hilo principal de Android dibuja las vistas y atiende botones. Las consultas y la copia de audio van a ejecutores para evitar que la pantalla se congele.
+
+| Elemento | Dónde trabaja |
 | --- | --- |
-| `app/src/main/AndroidManifest.xml` | Declara permisos, pantalla principal, recepción de enlaces compartidos, servicio de reproducción y proveedor de archivos. |
-| `app/src/main/res/drawable/icon.xml` | Dibuja el icono de Pulso como vector. |
-| `app/src/main/res/drawable/cover_placeholder.xml` | Dibuja la portada de reemplazo cuando falta una imagen. |
-| `app/src/main/res/values/styles.xml` | Define el tema inicial de Android y sus colores. |
-| `app/src/main/res/xml/file_paths.xml` | Permite entregar al instalador un APK de la carpeta temporal `updates/` mediante `FileProvider`. |
+| `lookups` en MainActivity | Consulta YouTube y prepara enlaces. |
+| `jobs` en MainActivity | Copia audio y exporta archivos, de forma secuencial. |
+| `ui` en MainActivity | Envía cambios de vistas y listados al hilo principal mediante Handler. |
+| `TrackDownloader.cancel` | Marca la cancelación y detiene el AudioDownload activo. |
+| `CoverArt.worker` | Lee y descarga imágenes; después envía su resultado al hilo principal. |
+| `Updater.worker` | Consulta GitHub, descarga y comprueba el APK. |
 
-Las pantallas se construyen en `MainActivity`; este proyecto no tiene archivos de diseño en `res/layout/`.
+Una variable `volatile` permite que distintos hilos vean el cambio de un indicador, como una cancelación. No convierte una lista compartida en segura: por eso la biblioteca y los pendientes se modifican en el hilo principal.
 
-## Compilación y Git
+En el código, `try` ejecuta una operación que puede fallar, `catch` atiende ese fallo y `finally` libera recursos incluso si hubo un error. Los archivos temporales terminan en `.part` y solo se renombran al completarse correctamente.
 
-| Archivo | Qué hace |
+## Guardado de datos
+
+`LibraryStore` recibe `getPreferences(MODE_PRIVATE)` de MainActivity. Conserva las claves `tracks` y `downloadQueue`, por lo que puede leer las bibliotecas existentes.
+
+`saveTracks` y `saveDownloads` guardan cada listado por separado. `saveSnapshot` usa una sola edición de preferencias cuando termina una descarga, para conservar juntos la canción añadida y el listado pendiente actualizado.
+
+| Dato | Ubicación dentro de Android |
 | --- | --- |
-| `.gitignore` | Evita subir cachés, compilaciones, configuración local y claves privadas. No excluye `.release/Pulso.apk`. |
-| `build.gradle` | En el repositorio configura el complemento de Android en el proyecto raíz. Está eliminado en la copia local al redactar esta guía; se respetó ese cambio previo. |
-| `settings.gradle` | Nombra el proyecto, incluye el módulo `app` y define los repositorios de complementos y dependencias. |
-| `app/build.gradle` | Configura la app: identificador, SDK, versión, Java, firma de producción y bibliotecas. Lee la versión desde `version.properties`. |
-| `gradle.properties` | Configura memoria, UTF-8 y AndroidX para Gradle. |
-| `version.properties` | Contiene `versionCode`, el número interno, y `versionName`, la versión visible. También lo leen los scripts de publicación. |
-| `gradlew` | Inicia Gradle en Linux y macOS usando el wrapper del proyecto. |
-| `gradlew.bat` | Inicia Gradle en Windows. |
-| `gradle/wrapper/gradle-wrapper.properties` | Fija la versión de Gradle, su descarga y la huella para verificarla. |
-| `gradle/wrapper/gradle-wrapper.jar` | Ejecutable del wrapper que prepara Gradle. Es un binario; su función se documenta aquí. |
+| Audio descargado | `files/music/` |
+| Portadas locales | `files/covers/` |
+| APK temporal de actualización | `cache/updates/` |
+| Canciones importadas | La ubicación elegida en el selector de archivos. |
+| Biblioteca, pendientes y opciones | Preferencias privadas de la app. |
 
-`local.properties`, si existe en tu equipo, contiene configuración local como la ruta del SDK. Las carpetas `.gradle/`, `build/` y `app/build/` son cachés o resultados generados. `.git/` contiene el historial y la configuración de Git, no código de la app.
+Estas son rutas del teléfono. Quitar una entrada de la biblioteca no borra su archivo. Desinstalar Pulso elimina sus archivos privados.
 
-## Pruebas existentes
+## Dónde hacer cambios
 
-Ruta: `app/src/test/java/com/sebas/pulso/`. Estas pruebas comprueban la lógica con JUnit; no sustituyen la interacción en un teléfono.
-
-| Archivo | Qué comprueba |
+| Quieres cambiar | Revisa |
 | --- | --- |
-| `TrackTest.java` | Guardado de canciones, portadas y artistas; compatibilidad con bibliotecas antiguas. |
-| `AudioChoiceTest.java` | Calidad persistente, direcciones caducadas, formatos duplicados y conservación de la pista elegida. |
-| `AudioDownloadTest.java` | Descargas por partes con un servidor local, reintentos, cancelación, alternativa de una conexión y rechazo de respuestas inválidas o incompletas. |
-| `DownloadQueueTest.java` | Persistencia de pendientes, calidades, duplicados, copias de trabajo y eliminación de descargas terminadas. |
-| `PlayerGestureTest.java` | Direcciones, distancia mínima, diagonales y gestos de ambos tamaños del reproductor. |
-| `ShuffleOrderTest.java` | Vueltas sin repeticiones, historial y cambios de biblioteca. |
-| `ThemePaletteTest.java` | Colores clásicos, mezcla de colores, texto claro u oscuro y códigos hexadecimales. |
-| `UpdateSpecTest.java` | Versiones nuevas, enlaces permitidos, identidad, tamaño e integridad del archivo. |
+| Títulos, botones o distribución de una pantalla | Sus métodos `build...` en MainActivity. |
+| Colores y degradados | ThemePalette y los métodos `paint...` de MainActivity. |
+| Selector de colores | ColorPickerDialog. |
+| Animación de letras, esfera o disco | `BrandView.onDraw`, `drawLogo`, `drawSphere`, `drawDisc` y `drawLetters`. |
+| Onda de avance | `WaveSeekBar.drawPlayedWave` y `updateAnimation`. Es decorativa, no mide el sonido. |
+| Direcciones y distancia mínima de los gestos | PlayerGesture. |
+| Reproducción o notificación multimedia | PlayerService. |
+| Calidad predeterminada | AudioChoice y `MainActivity.useAudioQuality`. |
+| Crear nombres de archivos o resolver el audio | TrackDownloader. |
+| Conexiones paralelas, rangos y reintentos | AudioDownload. |
+| Guardado de biblioteca y pendientes | LibraryStore. |
+| Comprobación e instalación de versiones | Updater y UpdateSpec. |
 
-## Herramientas y publicación
+## Pruebas y compilación
 
-| Archivo | Qué hace |
+Las pruebas de Track, AudioChoice, DownloadQueue, ShuffleOrder, PlayerGesture, ThemePalette y UpdateSpec comprueban sus reglas. AudioDownloadTest usa un servidor local para probar partes, reintentos, cancelación y respuestas incompletas. LibraryStoreTest verifica compatibilidad con los datos guardados y la edición conjunta de biblioteca y pendientes.
+
+Para ejecutar las comprobaciones con Java 17 y el SDK Android configurados:
+
+```bash
+bash gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease
+```
+
+Las pruebas de lógica y la compilación no sustituyen revisar gestos y animaciones en un teléfono.
+
+## Otros archivos del repositorio
+
+| Archivo | Propósito |
 | --- | --- |
-| `tools/ExtractorProbe.java` | Consulta formatos de un video para comprobar NewPipe. Con un segundo argumento intenta descargar el audio elegido y exige una cabecera WebM. |
-| `tools/make_update.py` | Genera `update.json` a partir del APK real, la versión y el registro de cambios. Incluye tamaño y SHA-256. |
-| `tools/verify_local_release.py` | Comprueba que un APK firmado localmente coincida con el certificado público, el identificador y la versión del proyecto. Recibe las salidas de `apksigner` y `aapt`. |
-| `.github/workflows/android.yml` | Ejecuta pruebas, Lint y compilaciones en GitHub Actions. Prepara artefactos para firma local y ofrece publicación mediante secretos de firma. |
-| `.github/workflows/publish-local.yml` | Al cambiar `.release/Pulso.apk` en `main`, ejecuta comprobaciones, valida su firma y publica APK, metadatos y fuentes en Releases. |
-| `.release/Pulso.apk` | APK ya compilado para publicación. Es un binario; los comentarios se añaden al código fuente, no al APK. |
-| `SIGNING_CERTIFICATE.txt` | Huella pública de la firma estable para verificar el APK. No contiene la clave privada. |
+| `app/src/main/AndroidManifest.xml` | Permisos, actividad, servicio y proveedor para entregar el APK al instalador. |
+| `app/src/main/res/drawable/` | Icono, nota musical y portada de reemplazo como vectores. |
+| `app/src/main/res/values/styles.xml` | Tema inicial de Android. |
+| `app/src/main/res/xml/file_paths.xml` | Acceso temporal al archivo de actualización mediante FileProvider. |
+| `build.gradle` | Declara la versión del complemento Android. |
+| `settings.gradle` y `app/build.gradle` | Módulo, dependencias, SDK, Java, identidad y firma de la app. |
+| `version.properties` | Versión interna y visible; también la leen los scripts de publicación. |
+| `gradlew`, `gradlew.bat` y `gradle/wrapper/` | Ejecutan la versión de Gradle del proyecto. |
+| `tools/make_update.py` | Genera metadatos desde el APK real. |
+| `tools/verify_local_release.py` | Verifica el certificado público, la identidad y la versión del APK. |
+| `tools/ExtractorProbe.java` | Consulta formatos y comprueba el audio del extractor. |
+| `.github/workflows/android.yml` | Pruebas, revisión y compilación en GitHub Actions. |
+| `.github/workflows/publish-local.yml` | Publica cuando cambia el APK firmado de `.release/` en main. |
+| `SIGNING_CERTIFICATE.txt` | Huella pública del certificado, sin clave privada. |
+| `docs/ACTUALIZACIONES.md` | Procedimiento de firma y publicación. |
+| `third-party/` y `LICENSE` | Atribuciones y licencias, conservadas íntegramente. |
 
-`update.json` se genera durante la publicación y lo consume el actualizador de la app. Consulta [ACTUALIZACIONES.md](ACTUALIZACIONES.md) para los pasos de firma y publicación.
-
-## Documentación y licencias
-
-| Archivo | Qué explica |
-| --- | --- |
-| `README.md` | Funciones, instalación, uso, límites y desarrollo de Pulso. |
-| `CHANGELOG.md` | Cambios de la versión; se usa en las notas de publicación y en los metadatos de actualización. |
-| `VALIDACION.md` | Comprobaciones registradas y alcance de las pruebas. |
-| `docs/ACTUALIZACIONES.md` | Migración entre versiones, firma y publicación de actualizaciones. |
-| `docs/MAPA_DEL_PROYECTO.md` | Esta guía para entender los archivos y su relación. |
-| `LICENSE` | Texto legal de la licencia GPL del proyecto. |
-| `third-party/Apache-2.0.txt` | Texto de la licencia Apache 2.0 de dependencias que la usan. |
-| `third-party/Rhino-MPL-2.0.txt` | Licencia MPL 2.0 de Rhino. |
-| `third-party/jsoup-MIT.txt` | Licencia MIT de jsoup. |
-| `third-party/nanojson-license.txt` | Licencia de nanojson. |
-| `third-party/protobuf-BSD.txt` | Licencia BSD de Protocol Buffers. |
-| `third-party/DEPENDENCY_NOTICES.txt` | Avisos y atribuciones incluidos por las dependencias. |
-| `third-party/NewPipeExtractor-sources.jar` | Archivo con fuentes de NewPipeExtractor. Es material externo; su función se documenta aquí. |
-
-Los textos legales y las fuentes de terceros se conservan íntegros. Las explicaciones sobre ellos están en esta guía.
-
-## Dónde quedan tus canciones y preferencias
-
-- Los archivos importados se leen desde la ubicación seleccionada en Android.
-- Las descargas se guardan en `files/music/` dentro del almacenamiento privado de Pulso.
-- Las portadas se guardan en `files/covers/`.
-- El APK de actualización se prepara en `cache/updates/`.
-- Biblioteca, pendientes, tema, pestaña, modo aleatorio y opciones de actualización se guardan en preferencias de Android.
-
-Estas rutas son del teléfono; no son carpetas del repositorio. Quitar una entrada de la biblioteca no borra su archivo. Desinstalar la app elimina sus archivos privados.
+Solo el código fuente y la documentación cambian en esta revisión. La versión y el APK publicado se conservan; subir comentarios y refactorizaciones no publica por sí mismo una actualización para el teléfono.

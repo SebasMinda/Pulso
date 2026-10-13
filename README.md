@@ -81,3 +81,7 @@ GPL-3.0-or-later. Código fuente de Pulso y avisos de dependencias incluidos en 
 - NewPipeExtractor, Team NewPipe, GPL-3.0-or-later, revisión `65cabc2ba5216ee871ace4a9963c08bdbf5d5dc0`.
 - OkHttp 4.12.0 y AndroidX Core 1.15.0, Apache-2.0.
 - Las versiones de dependencias se identifican en Gradle para reconstruir la aplicación.
+
+## Leer el código
+
+Consulta la [guía para leer el código](docs/MAPA_DEL_PROYECTO.md) para seguir las pantallas, las descargas, el guardado y los hilos. El código Java usa formato consistente y comentarios en español. MainActivity coordina las vistas, LibraryStore conserva los datos y TrackDownloader se ocupa de cada archivo de audio.
