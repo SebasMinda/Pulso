@@ -41,7 +41,9 @@ public class MainActivity extends Activity {
   private final Set<TextView> metalLabels = Collections.newSetFromMap(new WeakHashMap<>());
   private TextView themeName;
   private Switch automatic;
-  private BrandView brandLogo;
+  private PlaybackHeaderView brandLogo;
+  private VisualizerPermission visualizerPermission;
+  private boolean foreground;
   private LinearLayout root, songs;
   private TextView now, status, time;
   private Button play, download;
@@ -94,12 +96,14 @@ public class MainActivity extends Activity {
           player = ((PlayerService.LocalBinder) b).get();
           bound = true;
           player.setQueue(tracks);
+          refreshPlaybackHeader();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName n) {
           player = null;
           bound = false;
+          brandLogo.setPlayback(false, 0);
         }
       };
 
@@ -108,6 +112,7 @@ public class MainActivity extends Activity {
   public void onCreate(Bundle state) {
     super.onCreate(state);
     libraryStore = new LibraryStore(getPreferences(MODE_PRIVATE));
+    visualizerPermission = new VisualizerPermission(this, getPreferences(MODE_PRIVATE));
     trackDownloader = new TrackDownloader(getFilesDir());
     loadTheme();
     setVolumeControlStream(android.media.AudioManager.STREAM_MUSIC);
@@ -412,6 +417,7 @@ public class MainActivity extends Activity {
     spacedButton(appearance, button("Botones y apartados activos", () -> chooseThemeColor(1)));
     spacedButton(
         appearance, button("Detalles, iconos y barra de progreso", () -> chooseThemeColor(2)));
+    spacedButton(appearance, button("Permiso del visualizador", visualizerPermission::request));
   }
 
   // Permite elegir un color con barras RGB o escribir su código hexadecimal.
@@ -714,14 +720,14 @@ public class MainActivity extends Activity {
     return shell;
   }
 
-  /** Marca animada que se mantiene visible en todas las pantallas. */
+  /** La marca y el visualizador comparten tamaño y posición en todas las pantallas. */
   private void buildBrandHeader(LinearLayout shell) {
     LinearLayout brand = new LinearLayout(this);
     brand.setOrientation(LinearLayout.VERTICAL);
     brand.setGravity(Gravity.CENTER);
     brand.setPadding(dp(20), dp(8), dp(20), dp(4));
     shell.addView(brand, new LinearLayout.LayoutParams(-1, -2));
-    brandLogo = new BrandView(this);
+    brandLogo = new PlaybackHeaderView(this);
     brandLogo.setAccent(palette.accent);
     brand.addView(brandLogo, new LinearLayout.LayoutParams(-1, dp(38)));
   }
@@ -1955,6 +1961,7 @@ public class MainActivity extends Activity {
       };
 
   private void refreshPlaybackUi() {
+    refreshPlaybackHeader();
     refreshShuffle();
     refreshPlayerLabels();
     refreshPlayerArtwork();
@@ -1963,6 +1970,12 @@ public class MainActivity extends Activity {
       toast(player.error);
       player.error = "";
     }
+  }
+
+  private void refreshPlaybackHeader() {
+    boolean playing = player != null && player.playing();
+    if (foreground && playing) visualizerPermission.offerOnPlayback();
+    brandLogo.setPlayback(playing, playing ? player.audioSessionId() : 0);
   }
 
   private void refreshPlayerLabels() {
@@ -2002,12 +2015,38 @@ public class MainActivity extends Activity {
     time.setText(clock(player.position()) + " / " + clock(player.duration()));
   }
 
+  @Override
+  protected void onResume() {
+    super.onResume();
+    foreground = true;
+    brandLogo.setForeground(true);
+    refreshPlaybackHeader();
+  }
+
+  @Override
+  protected void onPause() {
+    foreground = false;
+    brandLogo.setForeground(false);
+    super.onPause();
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+    super.onRequestPermissionsResult(requestCode, permissions, results);
+    if (requestCode == VisualizerPermission.REQUEST_CODE) {
+      visualizerPermission.onResult();
+      refreshPlaybackHeader();
+    }
+  }
+
   // Guarda la pestaña y libera conexiones, tareas y recursos de la pantalla.
   @Override
   public void onDestroy() {
     getPreferences(0).edit().putInt("tab", selectedTab).apply();
     if (covers != null) covers.close();
     if (updater != null) updater.close();
+    if (brandLogo != null) brandLogo.setForeground(false);
+    if (visualizerPermission != null) visualizerPermission.close();
     handler.removeCallbacksAndMessages(null);
     cancelled = true;
     if (trackDownloader != null) trackDownloader.cancel();

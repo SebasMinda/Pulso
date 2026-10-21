@@ -178,6 +178,11 @@ public class PlayerService extends Service {
     return player != null && !preparing && player.isPlaying();
   }
 
+  /** Permite visualizar solo este audio. Cero impide capturar la mezcla general del teléfono. */
+  public int audioSessionId() {
+    return player != null && !preparing ? player.getAudioSessionId() : 0;
+  }
+
   public int duration() {
     return player != null && !preparing ? player.getDuration() : 0;
   }

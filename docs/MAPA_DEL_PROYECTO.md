@@ -31,6 +31,9 @@ Los nombres de clases y métodos están en inglés, como es habitual en Java. Lo
 | `ThemePalette.java` | Colores del tema, mezcla de tonos y contraste del texto. |
 | `ColorPickerDialog.java` | Vista previa, controles RGB y entrada hexadecimal. Devuelve el color confirmado; la actividad guarda el tema. |
 | `BrandView.java` | Dibuja PULSO, la esfera y el disco. Cada dibujo tiene su propio método. |
+| `PlaybackHeaderView.java` | Alterna BrandView y las barras. Abre Visualizer sobre la sesión de Pulso y lo libera al pausar u ocultarse. |
+| `AudioSpectrum.java` | Agrupa las frecuencias reales en 24 bandas y suaviza sus alturas. Es Java sin dependencias de Android. |
+| `VisualizerPermission.java` | Explica el permiso de audio al empezar a escuchar y permite recuperarlo desde Apariencia. |
 | `WaveSeekBar.java` | Dibuja la línea restante y la onda decorativa de progreso. Android mantiene el arrastre y la accesibilidad. |
 | `Updater.java` | Busca una actualización, descarga el APK, verifica identidad y firma y abre el instalador. |
 | `UpdateSpec.java` | Comprueba los metadatos de actualización y la integridad del archivo mediante tamaño y SHA-256. |
@@ -62,6 +65,16 @@ El parámetro `queued` indica si la operación pertenece al listado. Cuando es f
 `tick` se ejecuta cada `PLAYER_REFRESH_MS`, actualmente 500 milisegundos. Llama a `refreshPlaybackUi`, que separa textos, portadas y posición en sus propios métodos. Mientras `seeking` sea verdadero, el usuario está arrastrando la barra y la actividad no sobrescribe su posición.
 
 `shownCover` evita volver a cargar la misma portada en cada actualización.
+
+### Cabecera que responde a la música
+
+`refreshPlaybackHeader` consulta `PlayerService.playing` y `audioSessionId`. En reposo se ve el mismo `BrandView` de antes. Mientras se reproduce, `PlaybackHeaderView` abre `android.media.audiofx.Visualizer` con la sesión de esa canción, nunca con la sesión cero que representa toda la salida del teléfono.
+
+Cada 33 milisegundos lee una FFT: pares de números que indican la energía de las distintas frecuencias. `AudioSpectrum` reúne esas frecuencias en 24 bandas de graves a agudos. Una subida rápida y una bajada suave hacen legibles los golpes de la música. Un silencio lleva todas las alturas a cero; no se usan valores aleatorios ni una animación prefijada.
+
+`VisualizerPermission` ofrece el permiso una vez al comenzar a escuchar. Android lo presenta como Micrófono porque Visualizer exige `RECORD_AUDIO`, pero aquí el efecto se conecta al audio de MediaPlayer. Rechazarlo conserva la marca y permite seguir usando la app. El botón de Apariencia permite volver a intentarlo. Cancelar la explicación no se confunde con un rechazo permanente del permiso.
+
+Al pausar, cambiar de canción, ocultar la ventana o pasar a segundo plano se cancelan las lecturas y se libera el efecto. Al volver, se abre para la sesión actual. Si falla en un equipo, vuelve la marca sin reintentar continuamente. Si las animaciones de Android están desactivadas, no se abre el analizador.
 
 ## Hilos y cancelación
 
@@ -104,6 +117,7 @@ Estas son rutas del teléfono. Quitar una entrada de la biblioteca no borra su a
 | Colores y degradados | ThemePalette y los métodos `paint...` de MainActivity. |
 | Selector de colores | ColorPickerDialog. |
 | Animación de letras, esfera o disco | `BrandView.onDraw`, `drawLogo`, `drawSphere`, `drawDisc` y `drawLetters`. |
+| Visualizador de la cabecera | PlaybackHeaderView para captura y dibujo; AudioSpectrum para bandas y suavizado; VisualizerPermission para el permiso. |
 | Onda de avance | `WaveSeekBar.drawPlayedWave` y `updateAnimation`. Es decorativa, no mide el sonido. |
 | Direcciones y distancia mínima de los gestos | PlayerGesture. |
 | Reproducción o notificación multimedia | PlayerService. |
@@ -116,6 +130,8 @@ Estas son rutas del teléfono. Quitar una entrada de la biblioteca no borra su a
 ## Pruebas y compilación
 
 Las pruebas de Track, AudioChoice, DownloadQueue, ShuffleOrder, PlayerGesture, ThemePalette y UpdateSpec comprueban sus reglas. AudioDownloadTest usa un servidor local para probar partes, reintentos, cancelación y respuestas incompletas. LibraryStoreTest verifica compatibilidad con los datos guardados y la edición conjunta de biblioteca y pendientes.
+
+AudioSpectrumTest comprueba silencio, graves frente a agudos, intensidad, caída al silencio, datos FFT extremos, entradas inválidas y reinicio entre canciones. El permiso y la captura nativa requieren además una revisión en un teléfono.
 
 Para ejecutar las comprobaciones con Java 17 y el SDK Android configurados:
 
@@ -146,4 +162,4 @@ Las pruebas de lógica y la compilación no sustituyen revisar gestos y animacio
 | `docs/ACTUALIZACIONES.md` | Procedimiento de firma y publicación. |
 | `third-party/` y `LICENSE` | Atribuciones y licencias, conservadas íntegramente. |
 
-Solo el código fuente y la documentación cambian en esta revisión. La versión y el APK publicado se conservan; subir comentarios y refactorizaciones no publica por sí mismo una actualización para el teléfono.
+La versión se define en `version.properties`. Subir código a main ejecuta las comprobaciones; la publicación para el teléfono solo ocurre cuando se añade el APK firmado en `.release/Pulso.apk` y pasa el flujo de publicación.

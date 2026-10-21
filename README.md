@@ -22,6 +22,7 @@ Reproductor de música personal en español, con biblioteca local, audio de vide
 - Exportación de descargas a una carpeta elegida por el usuario.
 - Aviso de actualizaciones y descarga del APK firmado desde **SebasMinda/Pulso**.
 - Apariencia en Ajustes con el tema Pulso clásico y colores personalizados para fondo, botones y detalles. La elección se guarda y se aplica sin detener la música.
+- Cabecera PULSO con su animación de letras, esfera y disco en reposo. Al escuchar música se sustituye por un visualizador del audio real, con el color del tema.
 
 ## Instalar
 
@@ -38,6 +39,7 @@ Pulso 0.1 usaba una firma de prueba cuya clave no se conservó. La distribución
 5. Con **⋮ → Guardar una copia…** puedes copiar una descarga a una carpeta del teléfono.
 6. En **Ajustes → Actualizaciones**, pulsa **Buscar actualizaciones**. Si hay una versión nueva, acepta su descarga y confirma la instalación. **Avisar al abrir Pulso** consulta como máximo una vez al día mientras abres la app.
 7. En **Ajustes → Apariencia**, escoge **Pulso clásico** para recuperar el tema predeterminado o **Personalizado** para volver a tus colores guardados. Cambia el fondo, los botones y los detalles con los controles de color o un código hexadecimal y pulsa **Guardar**.
+8. La primera vez que escuches una canción, Pulso ofrecerá activar el visualizador. Android llama **Micrófono** al permiso que exige su analizador, aunque Pulso analiza únicamente su propia sesión de reproducción. Puedes concederlo después en **Ajustes → Apariencia → Permiso del visualizador**. Si lo rechazas, se conserva PULSO. El análisis no guarda audio, se detiene en segundo plano y respeta las animaciones desactivadas en Android.
 
 ## Calidad y límites
 

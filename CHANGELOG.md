@@ -1,3 +1,11 @@
+Pulso 0.17.0
+
+- Al reproducir una canción, PULSO se sustituye por barras que responden a las frecuencias reales del audio.
+- Al pausar o terminar la reproducción vuelve la animación original de letras, esfera y disco.
+- Conserva el tamaño de la cabecera y el color de detalles del tema en todas las pantallas.
+- Explica el permiso de audio una sola vez y permite activarlo después desde Apariencia.
+- Detiene el análisis al salir de la app y conserva la marca si falta permiso o el dispositivo no admite el efecto.
+
 Pulso 0.16.0
 
 - Barra de avance con una onda suave en la parte reproducida y línea recta en la parte restante.

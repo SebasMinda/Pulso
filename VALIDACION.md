@@ -1,5 +1,9 @@
-# Validación Pulso 0.16.0
+# Validación Pulso 0.17.0
 
-WaveSeekBar conserva el comportamiento nativo de SeekBar para el arrastre, los controles accesibles y el control circular. Dibuja una onda decorativa en el tramo reproducido y una línea en el restante. La onda no representa un análisis del audio. Solo se anima al reproducir con la vista visible y las animaciones de Android habilitadas. Al pausar conserva la forma quieta. Usa los colores de Apariencia y mantiene la exclusión de la barra en los gestos para cambiar de canción.
+La cabecera conserva BrandView en reposo. Mientras se reproduce, PlaybackHeaderView analiza la sesión de audio de Pulso con Visualizer y dibuja 24 bandas con el color del tema. Al pausar o terminar vuelve la marca. La captura se libera al ocultarse o pasar a segundo plano y se vuelve a crear al cambiar de sesión. Falta de permiso, animaciones desactivadas o efecto no disponible conservan PULSO.
 
-Pruebas unitarias, Lint y compilaciones de desarrollo y producción completadas en https://github.com/SebasMinda/Pulso/actions/runs/38289888768. APK firmado y certificado estable verificado. Comprobación visual y arrastre real en un teléfono pendientes.
+AudioSpectrumTest comprueba silencio, separación de graves y agudos, intensidad, decaimiento, límites, datos inválidos y reinicio. El permiso se ofrece una sola vez y puede recuperarse desde Apariencia. Cancelar la explicación no se trata como un rechazo permanente.
+
+Pendientes al preparar esta revisión: pruebas completas, Lint, compilaciones y verificación de firma. Revisión en un teléfono pendiente: permiso concedido/rechazado, barras siguiendo canciones reales y silencio, pausa/reanudación, cambio de pista, pantalla apagada, vuelta a la app y colores personalizados.
+
+WaveSeekBar conserva la onda decorativa de avance de 0.16.0; esa onda no mide el audio. Las portadas y la animación original de BrandView no se modifican.
