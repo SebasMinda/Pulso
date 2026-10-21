@@ -4,6 +4,6 @@ La cabecera conserva BrandView en reposo. Mientras se reproduce, PlaybackHeaderV
 
 AudioSpectrumTest comprueba silencio, separación de graves y agudos, intensidad, decaimiento, límites, datos inválidos y reinicio. El permiso se ofrece una sola vez y puede recuperarse desde Apariencia. Cancelar la explicación no se trata como un rechazo permanente.
 
-Pendientes al preparar esta revisión: pruebas completas, Lint, compilaciones y verificación de firma. Revisión en un teléfono pendiente: permiso concedido/rechazado, barras siguiendo canciones reales y silencio, pausa/reanudación, cambio de pista, pantalla apagada, vuelta a la app y colores personalizados.
+Pruebas unitarias, Lint y compilaciones de desarrollo y producción completadas en https://github.com/SebasMinda/Pulso/actions/runs/39637773619. APK firmado y certificado estable verificado. Revisión en un teléfono pendiente: permiso concedido/rechazado, barras siguiendo canciones reales y silencio, pausa/reanudación, cambio de pista, pantalla apagada, vuelta a la app y colores personalizados.
 
 WaveSeekBar conserva la onda decorativa de avance de 0.16.0; esa onda no mide el audio. Las portadas y la animación original de BrandView no se modifican.
