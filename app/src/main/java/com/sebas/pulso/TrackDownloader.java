@@ -69,7 +69,8 @@ public final class TrackDownloader {
           (bytes, total) -> progress.update(bytes, total, startedAtNanos));
       checkCancellation();
       if (!partial.renameTo(destination)) throw new IOException("No se pudo guardar.");
-      return new Track(entry.title, destination.toURI().toString(), entry.cover, entry.artist);
+      return new Track(
+          entry.title, destination.toURI().toString(), entry.cover, entry.artist, entry.url);
     } catch (Exception failure) {
       if (partial != null) partial.delete();
       throw failure;

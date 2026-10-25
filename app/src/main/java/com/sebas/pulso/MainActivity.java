@@ -62,6 +62,7 @@ public class MainActivity extends Activity {
   private boolean navigationReady;
   private ImageView playerCover, miniCover;
   private TextView artist, miniTitle, libraryCount;
+  private Button duplicatesButton;
   private Button miniPlay;
   private Button shuffleButton;
   private boolean playerExpanded, gestureEligible, gestureConsumed;
@@ -750,6 +751,8 @@ public class MainActivity extends Activity {
     libraryCount = text("0 canciones", 13, MUTED);
     libraryRow.addView(libraryCount, new LinearLayout.LayoutParams(0, -2, 1));
     libraryRow.addView(button("+ Importar", this::pick));
+    duplicatesButton = button("Revisar duplicados", this::reviewDuplicates);
+    spacedButton(root, duplicatesButton);
     songs = new LinearLayout(this);
     songs.setOrientation(LinearLayout.VERTICAL);
     root.addView(songs);
@@ -938,6 +941,13 @@ public class MainActivity extends Activity {
     songs.removeAllViews();
     if (navigationReady) songs.post(() -> reveal(songs, 0, dp(8)));
     libraryCount.setText(tracks.size() + (tracks.size() == 1 ? " canción" : " canciones"));
+    int duplicateGroups = SongDuplicates.groups(tracks).size();
+    duplicatesButton.setText(
+        duplicateGroups == 0
+            ? "Revisar duplicados"
+            : "Revisar duplicados · "
+                + duplicateGroups
+                + (duplicateGroups == 1 ? " grupo" : " grupos"));
     if (tracks.isEmpty()) {
       LinearLayout empty = new LinearLayout(this);
       empty.setOrientation(LinearLayout.VERTICAL);
@@ -1013,6 +1023,113 @@ public class MainActivity extends Activity {
                       })
                   .show());
     }
+  }
+
+  /** Revisa también las canciones antiguas. Nunca borra archivos al encontrar una coincidencia. */
+  private void reviewDuplicates() {
+    List<SongDuplicates.Group> groups = SongDuplicates.groups(tracks);
+    if (groups.isEmpty()) {
+      toast("No se encontraron duplicados por video, archivo o nombre y artista.");
+      return;
+    }
+    String[] labels = new String[groups.size()];
+    for (int index = 0; index < groups.size(); index++) {
+      SongDuplicates.Group group = groups.get(index);
+      labels[index] =
+          (group.exact ? "Duplicado · " : "Posible duplicado · ")
+              + group.tracks.size()
+              + " copias\n"
+              + group.tracks.get(0).title;
+    }
+    new AlertDialog.Builder(this)
+        .setTitle("Revisar duplicados")
+        .setItems(labels, (d, which) -> reviewDuplicateGroup(groups.get(which)))
+        .setNegativeButton("Cerrar", null)
+        .show();
+  }
+
+  private void reviewDuplicateGroup(SongDuplicates.Group group) {
+    List<Track> current = new ArrayList<>(group.tracks);
+    current.retainAll(tracks);
+    if (current.size() < 2) {
+      reviewDuplicates();
+      return;
+    }
+    String[] copies = new String[current.size()];
+    int[] selected = {0};
+    for (int index = 0; index < current.size(); index++) {
+      Track track = current.get(index);
+      copies[index] =
+          "Copia "
+              + (index + 1)
+              + " · "
+              + track.title
+              + "\n"
+              + (track.artist.isEmpty() ? "Audio local" : track.artist)
+              + "\n"
+              + Uri.decode(Uri.parse(track.uri).getLastPathSegment());
+      if (player != null && player.currentTrack() == track) selected[0] = index;
+    }
+    new AlertDialog.Builder(this)
+        .setTitle(
+            group.exact
+                ? "Elige la copia que quieres conservar"
+                : "Posibles versiones de la misma canción")
+        .setSingleChoiceItems(copies, selected[0], (d, which) -> selected[0] = which)
+        .setNeutralButton(
+            "Escuchar elegida", (d, which) -> playLibraryTrack(current.get(selected[0])))
+        .setNegativeButton("Conservar todas", null)
+        .setPositiveButton(
+            "Conservar elegida",
+            (d, which) -> confirmDuplicateRemoval(current, current.get(selected[0]), group.exact))
+        .show();
+  }
+
+  private void confirmDuplicateRemoval(List<Track> copies, Track keep, boolean exact) {
+    new AlertDialog.Builder(this)
+        .setTitle("Conservar una copia en la biblioteca")
+        .setMessage(
+            (exact
+                    ? "Se detectó el mismo video o archivo. "
+                    : "Coinciden el nombre y el artista, pero podrían ser versiones distintas. ")
+                + "Se conservará «"
+                + keep.title
+                + "» y se quitarán las otras entradas de la biblioteca. Los archivos de audio"
+                + " seguirán guardados.")
+        .setNegativeButton("Cancelar", null)
+        .setPositiveButton(
+            "Quitar otras entradas",
+            (d, which) -> {
+              if (!tracks.contains(keep)) return;
+              Track playing = player == null ? null : player.currentTrack();
+              for (Track copy : copies) if (copy != keep) tracks.remove(copy);
+              saveLibrary();
+              renderSongs();
+              if (player != null) {
+                if (playing != null && !tracks.contains(playing)) player.pause();
+                player.setQueue(tracks);
+              }
+              toast("Biblioteca actualizada. Los archivos se conservaron.");
+            })
+        .show();
+  }
+
+  private void playLibraryTrack(Track track) {
+    int index = tracks.indexOf(track);
+    if (player == null || index < 0) return;
+    startService(new Intent(this, PlayerService.class));
+    player.setQueue(tracks);
+    player.play(index);
+  }
+
+  private void showExistingSong(Track existing) {
+    downloadStatus("Ya tienes esta canción: " + existing.title + ". No se descargó otra copia.");
+    new AlertDialog.Builder(this)
+        .setTitle("Ya está en tu biblioteca")
+        .setMessage(existing.title)
+        .setPositiveButton("Escuchar", (d, which) -> playLibraryTrack(existing))
+        .setNegativeButton("Cerrar", null)
+        .show();
   }
 
   // Abre el selector de Android para elegir una portada.
@@ -1557,6 +1674,13 @@ public class MainActivity extends Activity {
           toast("Esta canción ya está en tu lista.");
           return;
         }
+    if (editing == null) {
+      SongDuplicates.Match existing = SongDuplicates.find(tracks, new Track("", "", "", "", url));
+      if (existing != null && existing.exact) {
+        showExistingSong(existing.track);
+        return;
+      }
+    }
     lookupBusy = true;
     controls();
     downloadStatus("Consultando las calidades disponibles…");
@@ -1615,31 +1739,59 @@ public class MainActivity extends Activity {
       toast("Espera a que termine la tarea actual.");
       return;
     }
+    DownloadQueue.Entry candidate =
+        new DownloadQueue.Entry(
+            url,
+            info.getName(),
+            thumbnail(info.getThumbnails()),
+            info.getUploaderName() == null ? "" : info.getUploaderName(),
+            quality);
+    if (editing == null) {
+      SongDuplicates.Match match = SongDuplicates.find(tracks, SongDuplicates.candidate(candidate));
+      if (match != null) {
+        if (match.exact) showExistingSong(match.track);
+        else
+          new AlertDialog.Builder(this)
+              .setTitle("Posible canción duplicada")
+              .setMessage(
+                  "Ya tienes «"
+                      + match.track.title
+                      + "» del mismo artista o canal. Podría ser otra versión. ¿Quieres continuar?")
+              .setNegativeButton("Cancelar", null)
+              .setNeutralButton("Escuchar existente", (d, which) -> playLibraryTrack(match.track))
+              .setPositiveButton(
+                  "Continuar",
+                  (d, which) -> {
+                    candidate.allowSimilar = true;
+                    acceptAudioQuality(candidate, null, direct);
+                  })
+              .show();
+        return;
+      }
+    }
+    acceptAudioQuality(candidate, editing, direct);
+  }
+
+  /** Se llama después de revisar duplicados o de confirmar una posible versión diferente. */
+  private void acceptAudioQuality(
+      DownloadQueue.Entry candidate, DownloadQueue.Entry editing, boolean direct) {
+    if (busy || lookupBusy) {
+      toast("Espera a que termine la tarea actual.");
+      return;
+    }
     if (direct) {
-      startDownloads(
-          Collections.singletonList(
-              new DownloadQueue.Entry(
-                  url,
-                  info.getName(),
-                  thumbnail(info.getThumbnails()),
-                  info.getUploaderName() == null ? "" : info.getUploaderName(),
-                  quality)),
-          false);
+      startDownloads(Collections.singletonList(candidate), false);
       return;
     }
     try {
       if (editing != null) {
-        editing.quality = quality;
+        editing.quality = candidate.quality;
         editing.state = DownloadQueue.PENDING;
         editing.error = "";
-      } else
-        downloadQueue.add(
-            new DownloadQueue.Entry(
-                url,
-                info.getName(),
-                thumbnail(info.getThumbnails()),
-                info.getUploaderName() == null ? "" : info.getUploaderName(),
-                quality));
+      } else if (!downloadQueue.add(candidate)) {
+        toast("Esta canción ya está en tu lista.");
+        return;
+      }
       saveQueue();
       renderQueueKeepingPosition();
       confirmAdded(editing != null);
@@ -1647,7 +1799,7 @@ public class MainActivity extends Activity {
           editing != null
               ? "Calidad actualizada. Pulsa Descargar todo cuando estés listo."
               : "Añadida con la mejor calidad disponible: "
-                  + quality.label
+                  + candidate.quality.label
                   + ". Puedes cambiarla desde Calidad en tu lista.");
     } catch (IllegalStateException e) {
       toast(e.getMessage());
@@ -1739,6 +1891,12 @@ public class MainActivity extends Activity {
                 int added = 0, duplicates = 0, full = 0;
                 for (DownloadQueue.Entry e : additions)
                   try {
+                    SongDuplicates.Match match =
+                        SongDuplicates.find(tracks, SongDuplicates.candidate(e));
+                    if (match != null && match.exact) {
+                      duplicates++;
+                      continue;
+                    }
                     if (downloadQueue.add(e)) added++;
                     else duplicates++;
                   } catch (IllegalStateException limitError) {
@@ -1753,7 +1911,7 @@ public class MainActivity extends Activity {
                     added
                         + " añadidas · "
                         + duplicates
-                        + " ya estaban · "
+                        + " ya estaban en la biblioteca o lista · "
                         + (failed + full)
                         + " no añadidas. Revisa Calidad antes de descargar.");
               });
@@ -1788,28 +1946,109 @@ public class MainActivity extends Activity {
   // Descarga una canción a la vez y añade cada archivo terminado a la biblioteca.
   private void startDownloads(List<DownloadQueue.Entry> batch, boolean queued) {
     if (busy || lookupBusy || batch.isEmpty()) return;
+    DownloadPlan plan = new DownloadPlan(batch, tracks);
+    if (!plan.similar.isEmpty()) {
+      new AlertDialog.Builder(this)
+          .setTitle("Revisar posibles duplicados")
+          .setMessage(duplicateDownloadSummary(plan))
+          .setNegativeButton("Cancelar", null)
+          .setPositiveButton(
+              "Omitir coincidencias", (d, which) -> applyDownloadPlan(batch, queued, plan, false))
+          .setNeutralButton(
+              "Descargar posibles versiones",
+              (d, which) -> applyDownloadPlan(batch, queued, plan, true))
+          .show();
+      return;
+    }
+    applyDownloadPlan(batch, queued, plan, false);
+  }
+
+  private String duplicateDownloadSummary(DownloadPlan plan) {
+    StringBuilder message =
+        new StringBuilder(
+            plan.similar.size()
+                + " canciones coinciden en nombre y artista con tu biblioteca o con otra del"
+                + " lote:\n\n");
+    for (int index = 0; index < Math.min(6, plan.similar.size()); index++) {
+      DownloadQueue.Entry entry = plan.similar.get(index);
+      message.append("• ").append(entry.title).append(" · ").append(entry.artist).append('\n');
+    }
+    if (plan.similar.size() > 6)
+      message.append("Y ").append(plan.similar.size() - 6).append(" más.\n");
+    return message
+        .append(
+            "\n"
+                + "Omitir las quita del listado sin descargarlas. Puedes continuar si son otras"
+                + " versiones. Las coincidencias del mismo video se omiten siempre.")
+        .toString();
+  }
+
+  private void applyDownloadPlan(
+      List<DownloadQueue.Entry> batch, boolean queued, DownloadPlan plan, boolean allowSimilar) {
+    if (busy || lookupBusy) return;
+    List<DownloadQueue.Entry> ready = new ArrayList<>();
+    int omitted = 0;
+    for (DownloadQueue.Entry entry : batch) {
+      boolean skip =
+          plan.existing.contains(entry) || (!allowSimilar && plan.similar.contains(entry));
+      if (skip) {
+        omitted++;
+        if (queued) downloadQueue.complete(entry.url);
+      } else {
+        if (allowSimilar && plan.similar.contains(entry)) {
+          entry.allowSimilar = true;
+          if (queued)
+            for (DownloadQueue.Entry saved : downloadQueue.entries)
+              if (saved.url.equals(entry.url)) saved.allowSimilar = true;
+        }
+        ready.add(entry);
+      }
+    }
+    saveQueue();
+    renderQueue();
+    if (ready.isEmpty()) {
+      downloadStatus(omitted + " coincidencias omitidas. No se descargaron copias nuevas.");
+      return;
+    }
     cancelled = false;
     trackDownloader.resetCancellation();
     busy = true;
     cancelBatch.setEnabled(true);
     controls();
-    downloadStatus("Preparando " + batch.size() + " canciones…");
+    downloadStatus("Preparando " + ready.size() + " canciones…");
     scrollToSection(status);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    jobs.execute(() -> runDownloadBatch(batch, queued));
+    List<Track> known = new ArrayList<>(tracks);
+    final int alreadyOmitted = omitted;
+    jobs.execute(() -> runDownloadBatch(ready, queued, known, alreadyOmitted));
   }
 
   /**
    * Recorre una copia del listado en el hilo de trabajo. queued indica si hay que actualizar
    * pendientes o si es una descarga individual.
    */
-  private void runDownloadBatch(List<DownloadQueue.Entry> batch, boolean queued) {
+  private void runDownloadBatch(
+      List<DownloadQueue.Entry> batch, boolean queued, List<Track> known, int alreadyOmitted) {
     int completed = 0;
     int failed = 0;
+    int omitted = alreadyOmitted;
     try {
       for (int index = 0; index < batch.size(); index++) {
         if (cancelled || Thread.currentThread().isInterrupted()) break;
         DownloadQueue.Entry entry = batch.get(index);
+        SongDuplicates.Match duplicate =
+            SongDuplicates.find(known, SongDuplicates.candidate(entry));
+        if (duplicate != null && (duplicate.exact || !entry.allowSimilar)) {
+          omitted++;
+          if (queued)
+            ui(
+                () -> {
+                  downloadQueue.complete(entry.url);
+                  saveQueue();
+                  renderQueue();
+                });
+          continue;
+        }
         int position = index + 1;
         ui(() -> showDownloadStarted(entry, position, batch.size(), queued));
         try {
@@ -1820,6 +2059,7 @@ public class MainActivity extends Activity {
                       showDownloadProgress(
                           entry.title, position, batch.size(), bytes, total, startedAt));
           completed++;
+          known.add(downloaded);
           ui(() -> addDownloadedTrack(entry, downloaded, queued));
         } catch (Exception failure) {
           if (cancelled || Thread.currentThread().isInterrupted()) {
@@ -1837,7 +2077,8 @@ public class MainActivity extends Activity {
     } finally {
       int finalCompleted = completed;
       int finalFailed = failed;
-      ui(() -> finishDownloads(queued, finalCompleted, finalFailed));
+      int finalOmitted = omitted;
+      ui(() -> finishDownloads(queued, finalCompleted, finalFailed, finalOmitted));
     }
   }
 
@@ -1889,7 +2130,7 @@ public class MainActivity extends Activity {
   }
 
   /** Restablece los controles y permite volver a intentar las entradas pendientes. */
-  private void finishDownloads(boolean queued, int completed, int errors) {
+  private void finishDownloads(boolean queued, int completed, int errors, int omitted) {
     busy = false;
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     renderQueue();
@@ -1899,11 +2140,15 @@ public class MainActivity extends Activity {
               + completed
               + " descargadas · "
               + errors
-              + " fallidas. Las pendientes pueden reintentarse.");
+              + " fallidas · "
+              + omitted
+              + " duplicadas omitidas. Las pendientes pueden reintentarse.");
     } else if (cancelled) {
       downloadStatus("Descarga detenida. Tu lista se conserva.");
     } else if (completed > 0) {
       downloadStatus("✓ Canción descargada y guardada en tu biblioteca.");
+    } else if (omitted > 0) {
+      downloadStatus("Ya tienes esta canción. No se descargó otra copia.");
     } else {
       downloadStatus("No se pudo descargar la canción. Puedes seleccionarla para reintentar.");
     }

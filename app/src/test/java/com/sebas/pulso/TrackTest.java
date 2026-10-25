@@ -16,6 +16,7 @@ public class TrackTest {
     assertEquals("file:///music/song.m4a", t.uri);
     assertEquals("", t.cover);
     assertEquals("", t.artist);
+    assertEquals("", t.sourceUrl);
   }
 
   @Test
@@ -36,5 +37,20 @@ public class TrackTest {
     Track loaded = Track.fromJson(t.json());
     assertEquals("content://music/5", loaded.uri);
     assertEquals(t.cover, loaded.cover);
+  }
+
+  @Test
+  public void videoSourceSurvivesLibrarySaveAndCoverChange() throws Exception {
+    Track track =
+        new Track(
+            "Tema",
+            "file:///music/a.m4a",
+            "",
+            "Artista",
+            "https://www.youtube.com/watch?v=abcdefghijk");
+    track.cover = "content://my-cover/1";
+    Track loaded = Track.fromJson(new JSONObject(track.json().toString()));
+    assertEquals(track.sourceUrl, loaded.sourceUrl);
+    assertEquals(track.cover, loaded.cover);
   }
 }

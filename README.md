@@ -23,6 +23,8 @@ Reproductor de música personal en español, con biblioteca local, audio de vide
 - Aviso de actualizaciones y descarga del APK firmado desde **SebasMinda/Pulso**.
 - Apariencia en Ajustes con el tema Pulso clásico y colores personalizados para fondo, botones y detalles. La elección se guarda y se aplica sin detener la música.
 - Cabecera PULSO con su animación de letras, esfera y disco en reposo. Al escuchar música se sustituye por un visualizador del audio real, con el color del tema.
+- Transición suave entre la marca y el visualizador al reproducir y pausar.
+- Detección de duplicados en descargas y biblioteca, con revisión de posibles coincidencias de nombre y artista.
 
 ## Instalar
 
@@ -40,6 +42,7 @@ Pulso 0.1 usaba una firma de prueba cuya clave no se conservó. La distribución
 6. En **Ajustes → Actualizaciones**, pulsa **Buscar actualizaciones**. Si hay una versión nueva, acepta su descarga y confirma la instalación. **Avisar al abrir Pulso** consulta como máximo una vez al día mientras abres la app.
 7. En **Ajustes → Apariencia**, escoge **Pulso clásico** para recuperar el tema predeterminado o **Personalizado** para volver a tus colores guardados. Cambia el fondo, los botones y los detalles con los controles de color o un código hexadecimal y pulsa **Guardar**.
 8. La primera vez que escuches una canción, Pulso ofrecerá activar el visualizador. Android llama **Micrófono** al permiso que exige su analizador, aunque Pulso analiza únicamente su propia sesión de reproducción. Puedes concederlo después en **Ajustes → Apariencia → Permiso del visualizador**. Si lo rechazas, se conserva PULSO. El análisis no guarda audio, se detiene en segundo plano y respeta las animaciones desactivadas en Android.
+9. En **Biblioteca → Revisar duplicados**, revisa los grupos detectados, escucha una copia y elige si quieres conservar una entrada o todas. Quitar entradas desde esta revisión conserva sus archivos. Antes de descargar, Pulso omite el mismo video si ya está guardado. Si solo coinciden nombre y artista, pregunta si quieres continuar porque podría ser otra versión.
 
 ## Calidad y límites
 
@@ -56,6 +59,7 @@ Convertir audio comprimido a FLAC no recupera información perdida. Puedes impor
 - YouTube puede cambiar su sistema o restringir videos. Se rechazan respuestas que no sean audio; no se eluden inicios de sesión ni protección de contenido.
 - Quitar una canción de la biblioteca no borra su archivo. Desinstalar borra las descargas privadas: exporta lo que quieras conservar antes de hacerlo.
 - Las actualizaciones requieren confirmación. Se comprueban tamaño, SHA-256, identidad, versión y firma del APK.
+- Los duplicados se reconocen por el mismo archivo o identificador de video. En descargas antiguas se aprovecha la miniatura original cuando existe. Nombre y artista solo indican un posible duplicado. No se compara la señal de audio: grabaciones con nombres distintos y videos diferentes pueden requerir revisión manual.
 - Consulta [VALIDACION.md](VALIDACION.md) para el alcance de las pruebas.
 
 Descarga únicamente material propio o con permiso. Pulso no está afiliada a YouTube, Google ni NewPipe.

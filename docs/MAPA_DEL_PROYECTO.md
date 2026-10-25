@@ -4,7 +4,7 @@ Pulso usa Java para construir las pantallas y Android para reproducir música. E
 
 ## Un recorrido sencillo
 
-1. Empieza por `Track.java`. Representa una canción y sus cuatro datos: título, ubicación del audio, portada y artista.
+1. Empieza por `Track.java`. Representa una canción: título, ubicación del audio, portada, artista y enlace original cuando existe.
 2. Lee `MainActivity.onCreate` y `MainActivity.build`. Son la entrada a la aplicación y el orden de creación de las pantallas.
 3. Abre `PlayerService.java`. Controla la reproducción y sigue funcionando cuando la actividad deja de estar delante.
 4. Sigue el recorrido de una descarga: `prepareVideo`, `useAudioQuality`, `startDownloads`, `runDownloadBatch`, `TrackDownloader.download` y `AudioDownload.download`.
@@ -34,6 +34,8 @@ Los nombres de clases y métodos están en inglés, como es habitual en Java. Lo
 | `PlaybackHeaderView.java` | Alterna BrandView y las barras. Abre Visualizer sobre la sesión de Pulso y lo libera al pausar u ocultarse. |
 | `AudioSpectrum.java` | Agrupa las frecuencias reales en 24 bandas y suaviza sus alturas. Es Java sin dependencias de Android. |
 | `VisualizerPermission.java` | Explica el permiso de audio al empezar a escuchar y permite recuperarlo desde Apariencia. |
+| `SongDuplicates.java` | Reconoce el mismo video o archivo y agrupa posibles coincidencias por título y artista. |
+| `DownloadPlan.java` | Revisa un lote contra la biblioteca y sus propias entradas antes de iniciar descargas. |
 | `WaveSeekBar.java` | Dibuja la línea restante y la onda decorativa de progreso. Android mantiene el arrastre y la accesibilidad. |
 | `Updater.java` | Busca una actualización, descarga el APK, verifica identidad y firma y abre el instalador. |
 | `UpdateSpec.java` | Comprueba los metadatos de actualización y la integridad del archivo mediante tamaño y SHA-256. |
@@ -75,6 +77,18 @@ Cada 33 milisegundos lee una FFT: pares de números que indican la energía de l
 `VisualizerPermission` ofrece el permiso una vez al comenzar a escuchar. Android lo presenta como Micrófono porque Visualizer exige `RECORD_AUDIO`, pero aquí el efecto se conecta al audio de MediaPlayer. Rechazarlo conserva la marca y permite seguir usando la app. El botón de Apariencia permite volver a intentarlo. Cancelar la explicación no se confunde con un rechazo permanente del permiso.
 
 Al pausar, cambiar de canción, ocultar la ventana o pasar a segundo plano se cancelan las lecturas y se libera el efecto. Al volver, se abre para la sesión actual. Si falla en un equipo, vuelve la marca sin reintentar continuamente. Si las animaciones de Android están desactivadas, no se abre el analizador.
+
+`showSpectrum` anima durante 350 milisegundos la opacidad, escala y posición de ambos dibujos. `blend` conserva el punto actual para invertir la transición al pulsar rápido reproducir y pausar. La captura se libera al pausar, aunque las barras sigan visibles unos instantes durante su fundido de salida. Cambiar de sesión no obliga a mostrar PULSO entre dos canciones que ya están listas.
+
+### Detección de duplicados
+
+`Track.sourceUrl` conserva el video original de cada nueva descarga. Es opcional en JSON para no perder las bibliotecas anteriores. Cuando no existe, `SongDuplicates` intenta extraer el identificador de la miniatura de YouTube guardada en `cover`.
+
+El mismo URI o identificador de video es una coincidencia segura. Título y artista normalizados son solo una posible coincidencia. No se eliminan palabras como live o remix y no se agrupan títulos vacíos ni canciones sin artista solo por llamarse igual. No se analiza la señal de audio para identificar grabaciones.
+
+`prepareVideo` y `useAudioQuality` revisan la biblioteca. `DownloadPlan` vuelve a comprobar el lote completo, incluyendo repeticiones dentro de él. `allowSimilar` conserva la decisión explícita de descargar una posible versión distinta. El trabajador mantiene su propia lista de canciones ya guardadas para no depender de cuándo se redibuje la pantalla.
+
+`reviewDuplicates`, `reviewDuplicateGroup` y `confirmDuplicateRemoval` permiten revisar las copias antiguas y elegir una entrada con confirmación. Solo cambian referencias en la biblioteca, nunca eliminan archivos. Si se quita la canción que sonaba, se pausa antes de actualizar la cola.
 
 ## Hilos y cancelación
 
@@ -118,6 +132,8 @@ Estas son rutas del teléfono. Quitar una entrada de la biblioteca no borra su a
 | Selector de colores | ColorPickerDialog. |
 | Animación de letras, esfera o disco | `BrandView.onDraw`, `drawLogo`, `drawSphere`, `drawDisc` y `drawLetters`. |
 | Visualizador de la cabecera | PlaybackHeaderView para captura y dibujo; AudioSpectrum para bandas y suavizado; VisualizerPermission para el permiso. |
+| Transición entre marca y visualizador | `PlaybackHeaderView.showSpectrum`, `applyBlend` y `cancelTransition`. |
+| Duplicados y revisión de lotes | SongDuplicates, DownloadPlan y los métodos de revisión de MainActivity. |
 | Onda de avance | `WaveSeekBar.drawPlayedWave` y `updateAnimation`. Es decorativa, no mide el sonido. |
 | Direcciones y distancia mínima de los gestos | PlayerGesture. |
 | Reproducción o notificación multimedia | PlayerService. |
@@ -132,6 +148,8 @@ Estas son rutas del teléfono. Quitar una entrada de la biblioteca no borra su a
 Las pruebas de Track, AudioChoice, DownloadQueue, ShuffleOrder, PlayerGesture, ThemePalette y UpdateSpec comprueban sus reglas. AudioDownloadTest usa un servidor local para probar partes, reintentos, cancelación y respuestas incompletas. LibraryStoreTest verifica compatibilidad con los datos guardados y la edición conjunta de biblioteca y pendientes.
 
 AudioSpectrumTest comprueba silencio, graves frente a agudos, intensidad, caída al silencio, datos FFT extremos, entradas inválidas y reinicio entre canciones. El permiso y la captura nativa requieren además una revisión en un teléfono.
+
+SongDuplicatesTest cubre bibliotecas antiguas, tres copias del mismo video, títulos renombrados, grupos solapados y versiones distintas. DownloadPlanTest revisa repeticiones entre biblioteca y lote. TrackTest y DownloadQueueTest comprueban que el origen y la confirmación de versiones sobrevivan al guardado.
 
 Para ejecutar las comprobaciones con Java 17 y el SDK Android configurados:
 

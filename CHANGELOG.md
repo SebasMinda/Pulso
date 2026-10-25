@@ -1,3 +1,12 @@
+Pulso 0.18.0
+
+- Transición suave de opacidad, tamaño y movimiento entre PULSO y el visualizador al reproducir y pausar.
+- Evita volver a descargar un video que ya está en la biblioteca, incluso si cambió el título o el formato del enlace.
+- Las descargas guardan su origen. Las antiguas también se reconocen cuando conservan la miniatura original de YouTube.
+- Advierte de coincidencias de nombre y artista y permite continuar si son versiones distintas.
+- Revisa los duplicados antes de descargar un lote y cuenta las coincidencias omitidas.
+- Botón Revisar duplicados en Biblioteca para las copias existentes. Permite escuchar y elegir qué entrada conservar con confirmación, conservando los archivos de audio.
+
 Pulso 0.17.0
 
 - Al reproducir una canción, PULSO se sustituye por barras que responden a las frecuencias reales del audio.

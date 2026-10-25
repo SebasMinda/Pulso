@@ -1,6 +1,8 @@
 package com.sebas.pulso;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -10,6 +12,7 @@ import android.media.audiofx.Visualizer;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 
 /** Alterna la marca original y un espectro del audio que reproduce Pulso. */
@@ -24,6 +27,9 @@ public final class PlaybackHeaderView extends FrameLayout {
   // Recuerda un fallo para no intentar abrir el mismo efecto cada medio segundo.
   private int attemptedSession;
   private boolean foreground;
+  private boolean showingSpectrum;
+  private float blend;
+  private ValueAnimator transition;
 
   public PlaybackHeaderView(Context context) {
     super(context);
@@ -31,7 +37,7 @@ public final class PlaybackHeaderView extends FrameLayout {
     spectrum = new SpectrumView(context);
     addView(brand, new LayoutParams(-1, -1));
     addView(spectrum, new LayoutParams(-1, -1));
-    spectrum.setVisibility(GONE);
+    spectrum.setVisibility(INVISIBLE);
   }
 
   public void setAccent(int color) {
@@ -46,7 +52,7 @@ public final class PlaybackHeaderView extends FrameLayout {
     if (requestedSession != next) {
       requestedSession = next;
       attemptedSession = 0;
-      stopCapture();
+      releaseCapture();
     }
     updateCapture();
   }
@@ -72,7 +78,8 @@ public final class PlaybackHeaderView extends FrameLayout {
         || getWindowVisibility() != VISIBLE
         || !isShown()
         || !ValueAnimator.areAnimatorsEnabled()) {
-      stopCapture();
+      releaseCapture();
+      showSpectrum(false);
       return;
     }
     if (visualizer != null || attemptedSession == requestedSession) return;
@@ -85,17 +92,18 @@ public final class PlaybackHeaderView extends FrameLayout {
       if (visualizer.setCaptureSize(size) != Visualizer.SUCCESS
           || visualizer.setScalingMode(Visualizer.SCALING_MODE_NORMALIZED) != Visualizer.SUCCESS
           || visualizer.setEnabled(true) != Visualizer.SUCCESS) {
-        stopCapture();
+        releaseCapture();
+        showSpectrum(false);
         return;
       }
       fft = new byte[size];
       spectrum.audio.clear();
-      brand.setVisibility(GONE);
-      spectrum.setVisibility(VISIBLE);
+      showSpectrum(true);
       handler.post(captureFrame);
     } catch (RuntimeException e) {
       // El efecto no está disponible en todos los equipos. Se conserva la marca.
-      stopCapture();
+      releaseCapture();
+      showSpectrum(false);
     }
   }
 
@@ -107,19 +115,21 @@ public final class PlaybackHeaderView extends FrameLayout {
           if (visualizer == null) return;
           try {
             if (visualizer.getFft(fft) != Visualizer.SUCCESS) {
-              stopCapture();
+              releaseCapture();
+              showSpectrum(false);
               return;
             }
             spectrum.audio.update(fft, visualizer.getSamplingRate() / 1000);
             spectrum.invalidate();
             handler.postDelayed(this, FRAME_MS);
           } catch (RuntimeException e) {
-            stopCapture();
+            releaseCapture();
+            showSpectrum(false);
           }
         }
       };
 
-  private void stopCapture() {
+  private void releaseCapture() {
     handler.removeCallbacks(captureFrame);
     Visualizer previous = visualizer;
     visualizer = null;
@@ -137,8 +147,64 @@ public final class PlaybackHeaderView extends FrameLayout {
         }
       }
     }
-    spectrum.setVisibility(GONE);
-    if (brand.getVisibility() != VISIBLE) brand.setVisibility(VISIBLE);
+  }
+
+  /** Conserva el fundido actual si se pulsa reproducir y pausar antes de que termine. */
+  private void showSpectrum(boolean show) {
+    boolean animate =
+        foreground
+            && isAttachedToWindow()
+            && isShown()
+            && getWindowVisibility() == VISIBLE
+            && ValueAnimator.areAnimatorsEnabled();
+    float target = show ? 1 : 0;
+    if (showingSpectrum == show && animate) return;
+    showingSpectrum = show;
+    cancelTransition();
+    brand.setImportantForAccessibility(
+        show ? IMPORTANT_FOR_ACCESSIBILITY_NO : IMPORTANT_FOR_ACCESSIBILITY_YES);
+    spectrum.setImportantForAccessibility(
+        show ? IMPORTANT_FOR_ACCESSIBILITY_YES : IMPORTANT_FOR_ACCESSIBILITY_NO);
+    if (!animate || blend == target) {
+      applyBlend(target);
+      return;
+    }
+    transition = ValueAnimator.ofFloat(blend, target);
+    transition.setDuration(350);
+    transition.setInterpolator(new DecelerateInterpolator());
+    transition.addUpdateListener(value -> applyBlend((float) value.getAnimatedValue()));
+    transition.addListener(
+        new AnimatorListenerAdapter() {
+          @Override
+          public void onAnimationEnd(Animator animation) {
+            transition = null;
+          }
+        });
+    transition.start();
+  }
+
+  /** Ambos dibujos ocupan el mismo espacio; solo cambian opacidad, escala y unos pocos píxeles. */
+  private void applyBlend(float value) {
+    blend = value;
+    brand.setVisibility(value < 1 ? VISIBLE : INVISIBLE);
+    spectrum.setVisibility(value > 0 ? VISIBLE : INVISIBLE);
+    brand.setAlpha(1 - value);
+    spectrum.setAlpha(value);
+    float density = getResources().getDisplayMetrics().density;
+    brand.setTranslationY(-4 * density * value);
+    spectrum.setTranslationY(4 * density * (1 - value));
+    brand.setScaleX(1 - .12f * value);
+    brand.setScaleY(1 - .12f * value);
+    spectrum.setScaleX(.88f + .12f * value);
+    spectrum.setScaleY(.88f + .12f * value);
+  }
+
+  private void cancelTransition() {
+    if (transition == null) return;
+    transition.removeAllListeners();
+    transition.removeAllUpdateListeners();
+    transition.cancel();
+    transition = null;
   }
 
   @Override
@@ -164,7 +230,10 @@ public final class PlaybackHeaderView extends FrameLayout {
 
   @Override
   protected void onDetachedFromWindow() {
-    stopCapture();
+    releaseCapture();
+    cancelTransition();
+    showingSpectrum = false;
+    applyBlend(0);
     super.onDetachedFromWindow();
   }
 

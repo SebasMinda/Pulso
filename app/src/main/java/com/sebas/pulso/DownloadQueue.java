@@ -17,6 +17,8 @@ public final class DownloadQueue {
     public final String url, title, cover, artist;
     public AudioChoice quality;
     public String state = PENDING, error = "";
+    // Solo se activa cuando el usuario confirma una posible versión con el mismo nombre.
+    public boolean allowSimilar;
 
     public Entry(String url, String title, String cover, String artist, AudioChoice quality) {
       this.url = url;
@@ -31,6 +33,7 @@ public final class DownloadQueue {
       Entry e = new Entry(url, title, cover, artist, quality);
       e.state = state;
       e.error = error;
+      e.allowSimilar = allowSimilar;
       return e;
     }
 
@@ -42,7 +45,8 @@ public final class DownloadQueue {
           .put("artist", artist)
           .put("quality", quality.json())
           .put("state", state)
-          .put("error", error);
+          .put("error", error)
+          .put("allowSimilar", allowSimilar);
     }
   }
 
@@ -50,7 +54,8 @@ public final class DownloadQueue {
 
   // Añade un video si no estaba en la lista y respeta el límite de 100.
   public boolean add(Entry e) {
-    for (Entry old : entries) if (old.url.equals(e.url)) return false;
+    for (Entry old : entries)
+      if (old.url.equals(e.url) || SongDuplicates.sameVideo(old.url, e.url)) return false;
     if (entries.size() >= LIMIT)
       throw new IllegalStateException("La lista admite hasta 100 canciones.");
     entries.add(e);
@@ -100,6 +105,7 @@ public final class DownloadQueue {
                 AudioChoice.fromJson(o.getJSONObject("quality")));
         e.state = o.optString("state", PENDING);
         e.error = o.optString("error", "");
+        e.allowSimilar = o.optBoolean("allowSimilar", false);
         if (DONE.equals(e.state)) continue;
         if (RUNNING.equals(e.state)) {
           e.state = PENDING;

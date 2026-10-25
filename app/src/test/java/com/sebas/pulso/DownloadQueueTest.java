@@ -91,4 +91,24 @@ public class DownloadQueueTest {
     assertEquals(1, loaded.entries.size());
     assertEquals("b", loaded.entries.get(0).url);
   }
+
+  @Test
+  public void youtubeLinkVariantsDoNotEnterQueueTwice() {
+    DownloadQueue queue = new DownloadQueue();
+    queue.add(entry("https://youtu.be/abcdefghijk", 128));
+    assertFalse(queue.add(entry("https://www.youtube.com/watch?v=abcdefghijk&t=1", 64)));
+    assertEquals(128, queue.entries.get(0).quality.bitrate);
+  }
+
+  @Test
+  public void confirmationForPossibleVersionSurvivesSaveAndSnapshot() throws Exception {
+    DownloadQueue queue = new DownloadQueue();
+    DownloadQueue.Entry entry = entry("https://youtu.be/abcdefghijk", 128);
+    entry.allowSimilar = true;
+    queue.add(entry);
+    assertTrue(queue.pending().get(0).allowSimilar);
+    DownloadQueue restored = new DownloadQueue();
+    restored.restore(queue.json());
+    assertTrue(restored.entries.get(0).allowSimilar);
+  }
 }
